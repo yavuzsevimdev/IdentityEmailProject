@@ -1,0 +1,55 @@
+﻿@model MYAcademy_IdentityEmailProject.Models.DashboardCategoryDistributionViewModel
+
+<div class="dash-card">
+    <div class="dash-card-head">
+        <div>
+            <h2>Mesaj Kategorileri</h2>
+            <p>Mesajlarınızın dağılımı</p>
+        </div>
+    </div>
+
+    <div class="dash-dist-body">
+        <div class="dash-donut">
+            <canvas id="dashDistChart"
+                    role="img"
+                    aria-label="Mesaj kategorileri dağılım grafiği">
+            </canvas>
+
+            <div class="dash-donut-center">
+                <span>
+                    <i class="bi bi-pie-chart-fill"></i>
+                </span>
+            </div>
+        </div>
+
+        <ul class="dash-dist">
+            @foreach (var item in Model.Items)
+            {
+                <li>
+                    <span class="dash-dot" style="--c:@item.Color"></span>
+                    @item.Label
+                    <span class="n">@item.Count</span>
+                    <span class="p">%@item.Percentage</span>
+                </li>
+            }
+
+            @if (!Model.Items.Any())
+            {
+                <li>
+                    Henüz kategorili mesaj bulunmuyor.
+                </li>
+            }
+        </ul>
+    </div>
+</div>
+
+<script type="application/json" id="dashboardDistributionData">
+@Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+    Model.Items.Select(x => new
+    {
+        label = x.Label,
+        value = x.Count,
+        color = x.Color
+    })
+))
+</script>

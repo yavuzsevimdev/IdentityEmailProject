@@ -1,0 +1,176 @@
+﻿
+@model MYAcademy_IdentityEmailProject.Models.NavbarUserViewModel
+
+<header class="app-navbar">
+    <button class="nav-toggle" id="sidebarToggle" type="button"
+            aria-label="Menüyü daralt / genişlet" title="Menüyü daralt">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <div class="global-search">
+        <i class="bi bi-search"></i>
+        <input type="search" id="globalSearch"
+               placeholder="Mesajlarda, kişilerde ara…" autocomplete="off">
+        <span class="kbd">Ctrl K</span>
+    </div>
+
+    <div class="nav-actions">
+
+        <button class="icon-btn hide-xs" type="button" title="Yardım">
+            <i class="bi bi-question-circle"></i>
+        </button>
+
+        <div class="dropdown">
+            <button class="icon-btn" type="button"
+                    data-bs-toggle="dropdown" aria-expanded="false"
+                    title="Bildirimler">
+                <i class="bi bi-bell"></i>
+                <span class="pip"></span>
+            </button>
+
+            <div class="dropdown-menu dropdown-menu-end notif-menu">
+                <div class="d-flex justify-content-between align-items-center px-2 pt-1 pb-2">
+                    <strong style="font-size:14px">Bildirimler</strong>
+                    <span class="tag tag-is">3 yeni</span>
+                </div>
+
+                <div class="notif-item">
+                    <div class="ni av-lav">
+                        <i class="bi bi-envelope"></i>
+                    </div>
+                    <div>
+                        <div class="nt">Ayşe Demir size mesaj gönderdi</div>
+                        <div class="nd">5 dakika önce</div>
+                    </div>
+                </div>
+
+                <div class="notif-item">
+                    <div class="ni av-mint">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <div>
+                        <div class="nt">Sprint toplantısı 14:00'te başlıyor</div>
+                        <div class="nd">30 dakika önce</div>
+                    </div>
+                </div>
+
+                <div class="notif-item">
+                    <div class="ni av-blue">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <div>
+                        <div class="nt">Yeni cihazdan giriş yapıldı</div>
+                        <div class="nd">Dün, 22:14</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kullanıcı Bilgileri -->
+        <div class="dropdown">
+
+            <button class="user-chip" type="button"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+
+                @if (!string.IsNullOrWhiteSpace(Model?.ImageUrl))
+                {
+                    <img src="@Model.ImageUrl"
+                         class="avatar sm av-user"
+                         alt="Profil fotoğrafı"
+                         style="object-fit:cover;">
+                }
+                else
+                {
+                    <span class="avatar sm av-user">
+                        @(Model?.Initials ?? "K")
+                    </span>
+                }
+
+                <span class="meta">
+                    <span class="name d-block">
+                        @Model?.FullName
+                    </span>
+
+                    <span class="role d-block">
+                        @Model?.UserName
+                    </span>
+                </span>
+
+                <i class="bi bi-chevron-down"></i>
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end">
+
+                <li class="dd-head">
+
+                    @if (!string.IsNullOrWhiteSpace(Model?.ImageUrl))
+                    {
+                        <img src="@Model.ImageUrl"
+                             class="avatar av-user"
+                             alt="Profil fotoğrafı"
+                             style="object-fit:cover;">
+                    }
+                    else
+                    {
+                        <span class="avatar av-user">
+                            @(Model?.Initials ?? "K")
+                        </span>
+                    }
+
+                    <div style="min-width:0">
+                        <div style="font-weight:700">
+                            @Model?.FullName
+                        </div>
+
+                        <div style="font-size:12.5px;color:var(--muted)">
+                            @Model?.Email
+                        </div>
+                    </div>
+                </li>
+
+                <li><hr class="dropdown-divider"></li>
+
+                <li>
+                    <a class="dropdown-item"
+                       asp-controller="Profile"
+                       asp-action="MyProfile">
+                        <i class="bi bi-person"></i>
+                        Profilim
+                    </a>
+                </li>
+
+                <li>
+                    <a class="dropdown-item" href="#settings">
+                        <i class="bi bi-gear"></i>
+                        Ayarlar
+                    </a>
+                </li>
+
+                <li>
+                    <a class="dropdown-item" href="#"
+                       onclick="showToast('Tema seçenekleri yakında eklenecek.','bi-palette');return false;">
+                        <i class="bi bi-moon-stars"></i>
+                        Görünüm
+                    </a>
+                </li>
+
+                <li><hr class="dropdown-divider"></li>
+
+                <li>
+                    <form asp-controller="Login"
+                          asp-action="Logout"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <button type="submit" class="dropdown-item danger">
+                            <i class="bi bi-box-arrow-right"></i>
+                            Çıkış Yap
+                        </button>
+                    </form>
+                </li>
+
+            </ul>
+        </div>
+    </div>
+</header>

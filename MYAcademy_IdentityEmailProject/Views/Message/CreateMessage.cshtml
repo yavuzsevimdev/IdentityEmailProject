@@ -1,0 +1,325 @@
+﻿@model Message
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Yeni Mesaj";
+    ViewData["ActiveMenu"] = "compose";
+    Layout = "~/Views/MessageLayout/Index.cshtml";
+
+    // Controller'da: ViewBag.Categories = new SelectList(..., "CategoryId", "CategoryName")
+    var categories = ViewBag.Categories as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+
+    var userName  = User.FindFirstValue(ClaimTypes.GivenName) ?? User.Identity?.Name ?? "";
+    var userEmail = User.FindFirstValue(ClaimTypes.Email) ?? "";
+
+    // Alan hatalıysa satıra "has-error" sınıfı ekler (ModelState'ten okunur)
+    string ErrClass(string key) => ViewData.ModelState.TryGetValue(key, out var e) && e.Errors.Count > 0 ? "has-error" : "";
+}
+
+<style>
+    /* Kategori dropdown'u */
+    .cmp-select-wrap { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; }
+    .cmp-select {
+        width: 100%; appearance: none; -webkit-appearance: none;
+        border: 0; outline: 0; background: transparent; font: inherit; color: inherit;
+        padding: 6px 28px 6px 0; cursor: pointer;
+    }
+    .cmp-select-wrap .bi-chevron-down { position: absolute; right: 4px; pointer-events: none; color: var(--muted, #85899B); font-size: .8rem; }
+
+    /* Editörün altındaki hata mesajı */
+    .cmp-editor-wrap .cmp-err { position: static; padding: 0 26px 14px; }
+
+    /* Genel (model seviyesi) hata kutusu */
+    .cmp-alert.validation-summary-valid { display: none; }
+    .cmp-alert.validation-summary-errors {
+        margin: 16px 22px 0; padding: 12px 14px; background: #FFF8FA; border: 1px solid #F5CFDC;
+        border-radius: 12px; color: #C2476B; font-size: 13px; font-weight: 600;
+    }
+    .cmp-alert ul { list-style: none; margin: 0; padding: 0; }
+</style>
+
+<section class="compose" id="compose">
+
+    <div class="cmp-head">
+        <div>
+            <h1>Yeni Mesaj</h1>
+            <p>Yeni bir e-posta oluşturun ve gönderin</p>
+        </div>
+    </div>
+
+    @* Controller: CreateMessage (POST). Anti-forgery token'ı form tag helper otomatik ekler. *@
+    <form class="cmp-card" id="cmpForm" method="post" asp-action="CreateMessage" novalidate autocomplete="off">
+      @* ModelState.AddModelError("", "...") ile eklenen genel hatalar *@
+        <div asp-validation-summary="ModelOnly" class="cmp-alert" role="alert"></div>
+
+        <!-- Alıcı, kategori & konu -->
+        <div class="cmp-fields">
+            <div class="cmp-row">
+                <span class="cmp-label">Kimden</span>
+                <div class="cmp-from">
+                    <b>@userName</b>
+                    @if (!string.IsNullOrEmpty(userEmail))
+                    {
+                        <span>&lt;@userEmail&gt;</span>
+                    }
+                </div>
+            </div>
+
+            <div class="cmp-row @ErrClass(nameof(Model.ReceiverEmail))">
+                <label class="cmp-label" asp-for="ReceiverEmail">Kime</label>
+                <input asp-for="ReceiverEmail" class="cmp-subject" type="email"
+                       placeholder="ornek@alanadi.com" maxlength="256" spellcheck="false" autocomplete="email">
+                <div class="cmp-err" asp-validation-for="ReceiverEmail"></div>
+            </div>
+
+            <div class="cmp-row @ErrClass(nameof(Model.CategoryId))">
+                <label class="cmp-label" asp-for="CategoryId">Kategori</label>
+                <div class="cmp-select-wrap">
+                    <select asp-for="CategoryId" asp-items="categories" class="cmp-select">
+                        <option value="">Kategori seçin…</option>
+                    </select>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="cmp-err" asp-validation-for="CategoryId"></div>
+            </div>
+
+            <div class="cmp-row @ErrClass(nameof(Model.Subject))">
+                <label class="cmp-label" asp-for="Subject">Konu</label>
+                <input asp-for="Subject" class="cmp-subject" type="text"
+                       placeholder="Mesajınızın konusunu yazın..." maxlength="200">
+                <div class="cmp-err" asp-validation-for="Subject"></div>
+            </div>
+        </div>
+
+        <!-- Biçimlendirme araç çubuğu -->
+        <div class="cmp-toolbar" id="cmpToolbar" role="toolbar" aria-label="Biçimlendirme">
+            <div class="tb-wrap">
+                <button type="button" class="tb-btn tb-select" data-pop="block" title="Paragraf biçimi"><span id="tbBlockLabel">Paragraf</span><i class="bi bi-chevron-down"></i></button>
+                <div class="tb-pop tb-menu" data-pop-for="block">
+                    <button type="button" data-block="p">Paragraf</button>
+                    <button type="button" data-block="h1"><span class="bh1">Başlık 1</span></button>
+                    <button type="button" data-block="h2"><span class="bh2">Başlık 2</span></button>
+                    <button type="button" data-block="h3"><span class="bh3">Başlık 3</span></button>
+                    <button type="button" data-block="blockquote"><span class="bq">Alıntı</span></button>
+                </div>
+            </div>
+            <span class="tb-sep"></span>
+            <button type="button" class="tb-btn" data-cmd="bold" title="Kalın (Ctrl+B)"><i class="bi bi-type-bold"></i></button>
+            <button type="button" class="tb-btn" data-cmd="italic" title="İtalik (Ctrl+I)"><i class="bi bi-type-italic"></i></button>
+            <button type="button" class="tb-btn" data-cmd="underline" title="Altı çizili (Ctrl+U)"><i class="bi bi-type-underline"></i></button>
+            <button type="button" class="tb-btn" data-cmd="strikeThrough" title="Üstü çizili"><i class="bi bi-type-strikethrough"></i></button>
+            <div class="tb-wrap">
+                <button type="button" class="tb-btn" data-pop="color" title="Metin rengi"><i class="bi bi-fonts"></i><span class="cbar" id="tbColorBar"></span></button>
+                <div class="tb-pop" data-pop-for="color">
+                    <div class="tb-colors">
+                        @foreach (var c in new[] { "#303348", "#85899B", "#8B7FD6", "#5A4FB0", "#4A7CC2", "#3E9A77", "#B88A12", "#C8774A", "#C2476B", "#E07597" })
+                        {
+                            <button type="button" class="sw" data-color="@c" style="background:@c" title="@c"></button>
+                        }
+                    </div>
+                    <button type="button" class="tb-reset" data-color="#45485E"><i class="bi bi-arrow-counterclockwise"></i> Varsayılan renk</button>
+                </div>
+            </div>
+            <span class="tb-sep"></span>
+            <button type="button" class="tb-btn" data-cmd="insertUnorderedList" title="Madde işaretli liste"><i class="bi bi-list-ul"></i></button>
+            <button type="button" class="tb-btn" data-cmd="insertOrderedList" title="Numaralı liste"><i class="bi bi-list-ol"></i></button>
+            <div class="tb-wrap">
+                <button type="button" class="tb-btn" data-pop="link" title="Bağlantı ekle"><i class="bi bi-link-45deg"></i></button>
+                <div class="tb-pop tb-link" data-pop-for="link">
+                    <div class="ttl">Bağlantı ekle</div>
+                    <div class="r">
+                        <input type="text" id="tbLinkInput" placeholder="https://ornek.com" spellcheck="false">
+                        <button type="button" class="btn-mini" data-link="add">Ekle</button>
+                    </div>
+                    <button type="button" class="unl" data-link="remove"><i class="bi bi-link-45deg"></i> Bağlantıyı kaldır</button>
+                </div>
+            </div>
+            <span class="tb-sep"></span>
+            <button type="button" class="tb-btn" data-cmd="justifyLeft" title="Sola hizala"><i class="bi bi-text-left"></i></button>
+            <button type="button" class="tb-btn" data-cmd="justifyCenter" title="Ortala"><i class="bi bi-text-center"></i></button>
+            <button type="button" class="tb-btn" data-cmd="justifyRight" title="Sağa hizala"><i class="bi bi-text-right"></i></button>
+            <span class="tb-sep"></span>
+            <button type="button" class="tb-btn" data-cmd="removeFormat" title="Biçimlendirmeyi temizle"><i class="bi bi-eraser"></i></button>
+            <div class="tb-end">
+                <button type="button" class="tb-btn" data-cmd="undo" title="Geri al (Ctrl+Z)"><i class="bi bi-arrow-counterclockwise"></i></button>
+                <button type="button" class="tb-btn" data-cmd="redo" title="Yinele (Ctrl+Y)"><i class="bi bi-arrow-clockwise"></i></button>
+            </div>
+        </div>
+
+        <!-- Editör: yazılan HTML, formun içindeki gizli MessageDetail alanına aktarılır -->
+        <div class="cmp-editor-wrap @ErrClass(nameof(Model.MessageDetail))">
+            <div class="cmp-editor" id="cmpEditor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Mesaj içeriği" data-placeholder="Merhaba, mesajınızı buraya yazmaya başlayın…">@Html.Raw(Model?.MessageDetail)</div>
+            <input type="hidden" asp-for="MessageDetail" id="cmpContent" />
+            <div class="cmp-counter" id="cmpCounter">0 kelime · 0 karakter</div>
+            <div class="cmp-err" asp-validation-for="MessageDetail"></div>
+        </div>
+
+        <!-- Alt işlem çubuğu -->
+
+<div class="cmp-actions">
+    <button type="submit" class="btn-send" id="cmpSend"
+            asp-action="CreateMessage">
+        <span class="lbl">
+            <i class="bi bi-send-fill"></i> Mesajı Gönder
+        </span>
+    </button>
+
+    <button type="submit" class="btn-soft"
+            asp-action="SaveDraft" formnovalidate>
+        <span class="lbl">
+            <i class="bi bi-save"></i> Taslak Olarak Kaydet
+        </span>
+    </button>
+
+    <a class="btn-soft danger" asp-action="CreateMessage">
+        <i class="bi bi-x-circle"></i> Temizle
+    </a>
+
+    <span class="cmp-hint">
+        <span class="kbd-s">Ctrl</span> +
+        <span class="kbd-s">Enter</span> ile gönder
+    </span>
+</div>
+
+    </form>
+
+</section>
+
+@section Scripts {
+    <script>
+        /* Yalnızca editör için: biçimlendirme komutları + içeriği gizli input'a aktarma.
+           Form normal POST ile gönderilir (asp-for alanları → CreateMessage(Message message)). */
+        (function () {
+            const q  = (s, r) => (r || document).querySelector(s);
+            const qa = (s, r) => Array.prototype.slice.call((r || document).querySelectorAll(s));
+
+            const form = q('#cmpForm'), editor = q('#cmpEditor'), content = q('#cmpContent'), tb = q('#cmpToolbar');
+            const STATE_CMDS = ['bold', 'italic', 'underline', 'strikeThrough', 'insertUnorderedList', 'insertOrderedList', 'justifyLeft', 'justifyCenter', 'justifyRight'];
+            const BLOCKS = { p: 'Paragraf', div: 'Paragraf', h1: 'Başlık 1', h2: 'Başlık 2', h3: 'Başlık 3', blockquote: 'Alıntı' };
+            let savedRange = null;
+
+            try { document.execCommand('defaultParagraphSeparator', false, 'p'); document.execCommand('styleWithCSS', false, true); } catch (e) { }
+
+            const escapeHtml = s => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+            /* --- İçerik senkronu & sayaç --- */
+            function sync() {
+                if (['<br>', '<p><br></p>', '<div><br></div>'].indexOf(editor.innerHTML.trim()) > -1) editor.innerHTML = '';
+                content.value = editor.innerHTML;
+                const text = editor.innerText.replace(/\u00a0/g, ' ').trim();
+                const words = text ? text.split(/\s+/).length : 0;
+                q('#cmpCounter').textContent = words.toLocaleString('tr-TR') + ' kelime · ' + text.length.toLocaleString('tr-TR') + ' karakter';
+            }
+            editor.addEventListener('input', sync);
+
+            // Dışarıdan yapıştırılan biçimleri temizle (düz metin olarak ekle)
+            editor.addEventListener('paste', e => {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+                document.execCommand('insertText', false, text);
+            });
+
+            // Yazmaya başlayınca kırmızı hata durumunu kaldır
+            form.addEventListener('input', e => { const r = e.target.closest('.has-error'); if (r) r.classList.remove('has-error'); });
+
+            /* --- Seçimi koru (butona basınca editör seçimi kaybolmasın) --- */
+            function saveSelection() {
+                const sel = window.getSelection();
+                if (sel.rangeCount && editor.contains(sel.anchorNode)) savedRange = sel.getRangeAt(0).cloneRange();
+            }
+            function restoreSelection() {
+                if (savedRange && editor.contains(savedRange.startContainer)) {
+                    const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(savedRange);
+                }
+            }
+
+            function exec(cmd, value) {
+                editor.focus();
+                restoreSelection();
+                document.execCommand(cmd, false, value || null);
+                if (cmd === 'removeFormat') { document.execCommand('unlink'); document.execCommand('formatBlock', false, '<p>'); }
+                saveSelection(); sync(); updateToolbarState();
+            }
+
+            function insertLink() {
+                const input = q('#tbLinkInput'), raw = input.value.trim();
+                if (!raw) { input.focus(); return; }
+                const url = /^(https?:|mailto:)/i.test(raw) ? raw : 'https://' + raw;
+                editor.focus(); restoreSelection();
+                const sel = window.getSelection();
+                if (!sel.rangeCount || sel.isCollapsed || !editor.contains(sel.anchorNode)) {
+                    document.execCommand('insertHTML', false, '<a href="' + escapeHtml(url) + '">' + escapeHtml(raw) + '</a>&nbsp;');
+                } else {
+                    document.execCommand('createLink', false, url);
+                }
+                input.value = '';
+                closePops(); saveSelection(); sync();
+            }
+
+            /* --- Aktif buton durumları --- */
+            function updateToolbarState() {
+                const sel = window.getSelection();
+                const inEditor = sel.rangeCount > 0 && editor.contains(sel.anchorNode);
+                STATE_CMDS.forEach(c => {
+                    let on = false;
+                    if (inEditor) { try { on = document.queryCommandState(c); } catch (e) { } }
+                    const b = q('[data-cmd="' + c + '"]', tb);
+                    if (b) b.classList.toggle('active', on);
+                });
+                let block = '';
+                if (inEditor) { try { block = String(document.queryCommandValue('formatBlock') || '').toLowerCase().replace(/[<>]/g, ''); } catch (e) { } }
+                q('#tbBlockLabel').textContent = BLOCKS[block] || 'Paragraf';
+            }
+
+            /* --- Açılır paneller (paragraf, renk, bağlantı) --- */
+            function closePops() {
+                qa('.tb-pop.show').forEach(p => p.classList.remove('show'));
+                qa('.tb-btn.open').forEach(b => b.classList.remove('open'));
+            }
+            function togglePop(name, btn) {
+                const pop = q('[data-pop-for="' + name + '"]');
+                const willOpen = !pop.classList.contains('show');
+                closePops();
+                if (!willOpen) return;
+                pop.classList.add('show');
+                btn.classList.add('open');
+                pop.style.left = '0px';
+                const over = pop.getBoundingClientRect().right - (window.innerWidth - 12);
+                if (over > 0) pop.style.left = (-over) + 'px';
+                if (name === 'link') setTimeout(() => q('#tbLinkInput').focus(), 30);
+            }
+
+            tb.addEventListener('mousedown', e => { if (e.target.closest('button') && !e.target.closest('.tb-link .r')) e.preventDefault(); });
+            tb.addEventListener('click', e => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                if (btn.dataset.cmd) { closePops(); exec(btn.dataset.cmd); }
+                else if (btn.dataset.pop) togglePop(btn.dataset.pop, btn);
+                else if (btn.dataset.block) { exec('formatBlock', '<' + btn.dataset.block + '>'); closePops(); }
+                else if (btn.dataset.color) { exec('foreColor', btn.dataset.color); q('#tbColorBar').style.background = btn.dataset.color; closePops(); }
+                else if (btn.dataset.link === 'add') insertLink();
+                else if (btn.dataset.link === 'remove') { exec('unlink'); closePops(); }
+            });
+            q('#tbLinkInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); insertLink(); } });
+
+            document.addEventListener('selectionchange', () => { saveSelection(); updateToolbarState(); });
+            document.addEventListener('mousedown', e => { if (!e.target.closest('.tb-wrap')) closePops(); });
+
+            /* --- Gönderim --- */
+            form.addEventListener('submit', e => {
+                sync();                                   // MessageDetail gizli alanı güncel olsun
+                const btn = q('#cmpSend');
+                if (btn.disabled) { e.preventDefault(); return; }
+                btn.disabled = true;
+                q('.lbl', btn).innerHTML = '<span class="spin"></span> Gönderiliyor…';
+            });
+
+            form.addEventListener('keydown', e => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); form.requestSubmit(); }
+                if (e.key === 'Escape') closePops();
+            });
+
+            sync();   // sayfa ilk açıldığında (ör. hata sonrası dolu gelen içerik) sayaç ve gizli alan hazır olsun
+        })();
+    </script>
+}

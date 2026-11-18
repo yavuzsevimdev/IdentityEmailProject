@@ -1,0 +1,12 @@
+﻿  <header class="dash-head">
+    <div>
+      <h1>Dashboard</h1>
+      <p>Mesaj trafiğiniz ve hesap özetiniz tek bakışta.</p>
+    </div>
+    <div class="dash-head-actions">
+      <!-- ASP.NET: tarih sunucudan yazdırılabilir (DateTime.Now, tr-TR kültürü) -->
+      <span class="dash-date"><i class="bi bi-calendar3"></i> @DateTime.Now.ToString("dd MMMM yyyy, dddd")</span>
+      <!-- ASP.NET: asp-controller="Message" asp-action="CreateMessage" -->
+      <a class="btn-send" href="/Message/CreateMessage/"><span class="lbl"><i class="bi bi-pencil-square"></i> Yeni Mesaj</span></a>
+    </div>
+  </header>

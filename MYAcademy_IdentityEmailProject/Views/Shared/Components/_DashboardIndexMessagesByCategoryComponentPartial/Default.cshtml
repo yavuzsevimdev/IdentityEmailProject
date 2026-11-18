@@ -1,0 +1,47 @@
+﻿@model MYAcademy_IdentityEmailProject.Models.DashboardMessagesByCategoryViewModel
+
+<div class="dash-card">
+    <div class="dash-card-head">
+        <div>
+            <h2>Kategorilere Göre Mesajlar</h2>
+            <p>Gelen ve gönderilen tüm mesajların kategori dağılımı</p>
+        </div>
+
+        <span class="dash-pill">
+            <i class="bi bi-folder2"></i>
+            @Model.CategoryCount Kategori
+        </span>
+    </div>
+
+    <div class="dash-chart-box">
+        <canvas id="dashCategoryChart"
+                role="img"
+                aria-label="Kategorilere göre mesaj sayıları çubuk grafiği">
+        </canvas>
+
+        <div class="dash-chart-fallback">
+            <div>
+                <i class="bi bi-bar-chart"></i>
+                Grafik yüklenemedi.
+            </div>
+        </div>
+
+        @if (!Model.Items.Any())
+        {
+            <div class="dash-chart-empty">
+                Henüz kategorili mesaj bulunmuyor.
+            </div>
+        }
+    </div>
+</div>
+
+<script type="application/json" id="dashboardCategoryChartData">
+@Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+    Model.Items.Select(x => new
+    {
+        label = x.Label,
+        value = x.Count,
+        color = x.Color
+    })
+))
+</script>

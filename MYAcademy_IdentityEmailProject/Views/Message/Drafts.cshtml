@@ -1,0 +1,380 @@
+﻿
+@model List<Message>
+@using System.Globalization
+@using System.Net
+@using System.Text.RegularExpressions
+
+@{
+    ViewData["Title"] = "Taslaklar";
+    ViewData["ActiveMenu"] = "drafts";
+    Layout = "~/Views/MessageLayout/Index.cshtml";
+
+    var drafts = Model ?? new List<Message>();
+    var userEmail = User.Identity?.Name ?? "";
+    var sortOrder = ViewBag.SortOrder?.ToString() ?? "newest";
+}
+
+@functions {
+    static readonly CultureInfo Tr = new("tr-TR");
+
+    static string Snippet(string? html, int max = 140)
+    {
+        if (string.IsNullOrWhiteSpace(html))
+            return "";
+
+        var text = WebUtility.HtmlDecode(
+            Regex.Replace(html, "<[^>]+>", " ")
+        );
+
+        text = Regex.Replace(text, @"\s+", " ").Trim();
+
+        return text.Length > max
+            ? text[..max].TrimEnd() + "…"
+            : text;
+    }
+
+    static string ShortTime(DateTime date)
+    {
+        var today = DateTime.Today;
+
+        if (date.Date == today)
+            return date.ToString("HH:mm", Tr);
+
+        if (date.Date == today.AddDays(-1))
+            return "Dün";
+
+        if (date.Year == today.Year)
+            return date.ToString("d MMM", Tr);
+
+        return date.ToString("dd.MM.yyyy", Tr);
+    }
+
+    static string Initials(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return "?";
+
+        return email[..1].ToUpper(Tr);
+    }
+}
+
+<section class="inbox" id="inbox">
+
+    <div class="panel list-panel">
+
+        <div class="list-head">
+
+            <div class="list-title">
+                <div>
+                    <h1>Taslaklar</h1>
+                    <div class="sub" id="inboxSub">
+                        @drafts.Count taslak · @userEmail
+                    </div>
+                </div>
+
+                <span class="count-pill">
+                    @drafts.Count taslak
+                </span>
+            </div>
+
+            <div class="list-tools">
+
+                <div class="list-tools-main">
+
+                    <div class="list-search" id="listSearchWrap">
+                        <i class="bi bi-search"></i>
+
+                        <input type="text"
+                               id="listSearch"
+                               placeholder="Alıcı, konu veya içerik ara"
+                               autocomplete="off">
+
+                        <button class="clear"
+                                id="listSearchClear"
+                                type="button"
+                                aria-label="Temizle">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="bulk-bar">
+
+            <span class="sel-info">
+                Kayıtlı taslaklar
+            </span>
+
+            <span class="spacer"></span>
+
+            <div class="sort-control">
+                <i class="bi bi-sort-down sort-icon"></i>
+
+                <form asp-action="Drafts" method="get" class="sort-form">
+
+                    <select name="sortOrder"
+                            class="sort-select"
+                            onchange="this.form.submit()">
+
+                        <option value="newest" selected="@(sortOrder == "newest")">
+                            En yeni
+                        </option>
+
+                        <option value="oldest" selected="@(sortOrder == "oldest")">
+                            En eski
+                        </option>
+
+                    </select>
+
+                    <i class="bi bi-chevron-down sort-chevron"></i>
+
+                </form>
+            </div>
+
+        </div>
+
+        <div class="msg-list" id="msgList">
+
+            @foreach (var draft in drafts)
+            {
+                var snippet = Snippet(draft.MessageDetail);
+
+                var search = $"{draft.ReceiverEmail} {draft.Subject} {snippet}"
+                    .ToLower(Tr);
+
+                var editUrl = Url.Action(
+                    "EditDraft",
+                    "Message",
+                    new { id = draft.MessageId }
+                );
+
+                <article class="msg-item"
+                         data-id="@draft.MessageId"
+                         data-href="@editUrl"
+                         data-search="@search"
+                         tabindex="0"
+                         title="Taslağı düzenle">
+
+                    <div class="lead">
+                        <span class="avatar av-lav">
+                            @Initials(draft.ReceiverEmail)
+                        </span>
+                    </div>
+
+                    <div class="mi-sender">
+                        <span class="sender">
+                            @(string.IsNullOrWhiteSpace(draft.ReceiverEmail)
+                                ? "Alıcı belirtilmedi"
+                                : draft.ReceiverEmail)
+                        </span>
+                    </div>
+
+                    <div class="mi-main">
+                        <span class="subject">
+                            @(string.IsNullOrWhiteSpace(draft.Subject)
+                                ? "(Konu yok)"
+                                : draft.Subject)
+                        </span>
+
+                        <span class="snippet">
+                            @(string.IsNullOrWhiteSpace(snippet)
+                                ? "Mesaj içeriği yok"
+                                : snippet)
+                        </span>
+                    </div>
+
+                    <span class="time"
+                          title="@draft.SendDate.ToString("d MMMM yyyy HH:mm", Tr)">
+                        @ShortTime(draft.SendDate)
+                    </span>
+
+                </article>
+            }
+
+            <div class="empty-list"
+                 id="emptyInbox"
+                 hidden="@(drafts.Any() ? "hidden" : null)">
+
+                <div class="ic">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+
+                <h6>Henüz taslağınız yok</h6>
+
+                <div>Kaydettiğiniz taslaklar burada listelenecek.</div>
+
+            </div>
+
+            <div class="empty-list" id="noResults" hidden>
+                <div class="ic">
+                    <i class="bi bi-search-heart"></i>
+                </div>
+
+                <h6>Sonuç bulunamadı</h6>
+
+                <div>Arama kriterlerinizi değiştirmeyi deneyin.</div>
+            </div>
+
+        </div>
+
+        <div class="list-foot">
+            <span class="range" id="rangeInfo"></span>
+            <div class="pager" id="pager"></div>
+        </div>
+
+    </div>
+
+</section>
+
+@section Scripts {
+    <script>
+        (() => {
+
+            const { $, $$ } = window.Mailora;
+
+            const PER_PAGE = 10;
+
+            const state = {
+                query: '',
+                page: 1
+            };
+
+            const listEl = $('#msgList');
+
+            const rows = () => $$('.msg-item', listEl);
+
+            const filtered = () => {
+                const query = state.query.trim().toLocaleLowerCase('tr-TR');
+
+                return rows().filter(row =>
+                    !query || row.dataset.search.includes(query)
+                );
+            };
+
+            function render() {
+
+                const all = filtered();
+
+                const pageCount = Math.max(1, Math.ceil(all.length / PER_PAGE));
+
+                state.page = Math.min(state.page, pageCount);
+
+                const start = (state.page - 1) * PER_PAGE;
+
+                const visible = new Set(all.slice(start, start + PER_PAGE));
+
+                rows().forEach(row => {
+                    row.hidden = !visible.has(row);
+                });
+
+                $('#emptyInbox').hidden = rows().length > 0;
+                $('#noResults').hidden = rows().length === 0 || all.length > 0;
+
+                const first = all.length ? start + 1 : 0;
+                const last = Math.min(start + PER_PAGE, all.length);
+
+                $('#rangeInfo').textContent =
+                    `${first}–${last} / ${all.length} taslak`;
+
+                renderPager(pageCount);
+            }
+
+            function renderPager(pageCount) {
+
+                let html = `
+                    <button type="button"
+                            data-page="prev"
+                            ${state.page === 1 ? 'disabled' : ''}>
+                        <i class="bi bi-chevron-left"></i>
+                    </button>`;
+
+                for (let i = 1; i <= pageCount; i++) {
+                    html += `
+                        <button type="button"
+                                data-page="${i}"
+                                class="${i === state.page ? 'active' : ''}">
+                            ${i}
+                        </button>`;
+                }
+
+                html += `
+                    <button type="button"
+                            data-page="next"
+                            ${state.page === pageCount ? 'disabled' : ''}>
+                        <i class="bi bi-chevron-right"></i>
+                    </button>`;
+
+                $('#pager').innerHTML = html;
+            }
+
+            $('#listSearch').addEventListener('input', e => {
+                state.query = e.target.value;
+                state.page = 1;
+
+                $('#listSearchWrap').classList.toggle(
+                    'has-value',
+                    !!state.query
+                );
+
+                render();
+            });
+
+            $('#listSearchClear').addEventListener('click', () => {
+                $('#listSearch').value = '';
+                state.query = '';
+                state.page = 1;
+
+                $('#listSearchWrap').classList.remove('has-value');
+
+                render();
+            });
+
+            $('#pager').addEventListener('click', e => {
+
+                const button = e.target.closest('button[data-page]');
+
+                if (!button || button.disabled)
+                    return;
+
+                const page = button.dataset.page;
+
+                if (page === 'prev')
+                    state.page--;
+                else if (page === 'next')
+                    state.page++;
+                else
+                    state.page = Number(page);
+
+                render();
+
+                listEl.scrollTop = 0;
+            });
+
+            function openRow(row) {
+                if (row.dataset.href)
+                    location.href = row.dataset.href;
+            }
+
+            listEl.addEventListener('click', e => {
+                const row = e.target.closest('.msg-item');
+
+                if (row)
+                    openRow(row);
+            });
+
+            listEl.addEventListener('keydown', e => {
+                const row = e.target.closest('.msg-item');
+
+                if (row && e.key === 'Enter')
+                    openRow(row);
+            });
+
+            render();
+
+        })();
+    </script>
+}

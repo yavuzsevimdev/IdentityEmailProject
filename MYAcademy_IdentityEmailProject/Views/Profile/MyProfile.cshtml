@@ -1,0 +1,927 @@
+﻿
+@model MyProfileViewModel
+
+@{
+    ViewData["Title"] = "Profil";
+    ViewData["ActiveMenu"] = "profile";
+    Layout = "~/Views/MessageLayout/Index.cshtml";
+}
+
+<style>
+    :root {
+        --profile-accent: #8B7FD6;
+        --profile-accent-dark: #7467C7;
+        --profile-bg: #F8F9FD;
+        --profile-border: #ECEBF5;
+        --profile-text: #303348;
+        --profile-muted: #85899B;
+        --profile-shadow: 0 15px 40px rgba(91, 80, 170, .09);
+    }
+
+    .profile-page {
+        color: var(--profile-text);
+        font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+    }
+
+    .profile-header {
+        margin-bottom: 25px;
+    }
+
+    .profile-header h2 {
+        font-size: 25px;
+        font-weight: 800;
+        letter-spacing: -.5px;
+        margin-bottom: 7px;
+    }
+
+    .profile-header p {
+        color: var(--profile-muted);
+        font-size: 13.5px;
+        margin: 0;
+    }
+
+    .profile-card {
+        background: #fff;
+        border: 1px solid var(--profile-border);
+        border-radius: 22px;
+        padding: 28px;
+        box-shadow: var(--profile-shadow);
+        margin-bottom: 22px;
+    }
+
+    .profile-card-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+
+    .profile-card-icon {
+        width: 43px;
+        height: 43px;
+        border-radius: 13px;
+        display: grid;
+        place-items: center;
+        background: #EFEBFC;
+        color: var(--profile-accent);
+        font-size: 19px;
+        flex-shrink: 0;
+    }
+
+    .profile-card-title h5 {
+        font-size: 16px;
+        font-weight: 800;
+        margin: 0 0 4px;
+    }
+
+    .profile-card-title p {
+        color: var(--profile-muted);
+        font-size: 12px;
+        margin: 0;
+    }
+
+    /* Profile Summary */
+
+    .profile-summary {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 25px;
+        background: linear-gradient(135deg, #F4F1FF, #F8FAFF);
+        border: 1px solid #ECE8FA;
+        border-radius: 20px;
+        margin-bottom: 22px;
+    }
+
+    .profile-avatar {
+        width: 82px;
+        height: 82px;
+        flex-shrink: 0;
+        border-radius: 25px;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #B4AAF0, var(--profile-accent));
+        color: white;
+        font-size: 30px;
+        font-weight: 800;
+        box-shadow: 0 8px 20px rgba(139, 127, 214, .25);
+    }
+
+    .profile-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .profile-summary h4 {
+        font-size: 19px;
+        font-weight: 800;
+        margin-bottom: 5px;
+    }
+
+    .profile-summary p {
+        color: var(--profile-muted);
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 10px;
+        border-radius: 30px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .status-success {
+        background: #E3F5EE;
+        color: #3E9A77;
+    }
+
+    .status-warning {
+        background: #FFF3E8;
+        color: #C47A42;
+    }
+
+    /* Form Fields */
+
+    .profile-field {
+        margin-bottom: 20px;
+    }
+
+    .profile-field label,
+    .password-label {
+        display: block;
+        font-size: 12px;
+        font-weight: 700;
+        color: #686B80;
+        margin-bottom: 8px;
+    }
+
+    .profile-input {
+        width: 100%;
+        min-height: 49px;
+        border: 1.5px solid var(--profile-border);
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-family: inherit;
+        font-size: 13px;
+        background: #FAFAFD;
+        color: var(--profile-text);
+        transition: .2s ease;
+    }
+
+    .profile-input:focus {
+        background: #fff;
+        border-color: #BFB6EE;
+        box-shadow: 0 0 0 4px rgba(139, 127, 214, .12);
+        outline: none;
+    }
+
+    .profile-input[readonly] {
+        background: #F1F1F7;
+        color: var(--profile-muted);
+        cursor: not-allowed;
+    }
+
+    textarea.profile-input {
+        min-height: 105px;
+        resize: vertical;
+        line-height: 1.6;
+    }
+
+    .profile-input-group {
+        position: relative;
+    }
+
+    .profile-input-group > i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--profile-accent);
+        font-size: 16px;
+        pointer-events: none;
+    }
+
+    .profile-input-group .profile-input {
+        padding-left: 42px;
+    }
+
+    .profile-input-hint {
+        color: var(--profile-muted);
+        font-size: 11px;
+        margin-top: 7px;
+        display: block;
+    }
+
+    /* Image Preview */
+
+    .image-preview-card {
+        padding: 18px;
+        background: #FAFAFD;
+        border: 1px solid var(--profile-border);
+        border-radius: 16px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .image-preview-avatar {
+        width: 112px;
+        height: 112px;
+        border-radius: 28px;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #B4AAF0, var(--profile-accent));
+        color: white;
+        font-size: 42px;
+        box-shadow: 0 8px 20px rgba(139, 127, 214, .2);
+        margin-bottom: 14px;
+    }
+
+    .image-preview-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .image-preview-card h6 {
+        font-size: 13px;
+        font-weight: 800;
+        margin-bottom: 5px;
+    }
+
+    .image-preview-card p {
+        color: var(--profile-muted);
+        font-size: 11px;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .image-preview-status {
+        margin-top: 12px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #3E9A77;
+    }
+
+    .image-preview-status.error {
+        color: #C2476B;
+    }
+
+    /* Password Form */
+
+    .password-input {
+        position: relative;
+    }
+
+    .password-input .form-control {
+        height: 49px;
+        border: 1.5px solid var(--profile-border);
+        border-radius: 12px;
+        padding: 12px 45px 12px 14px;
+        font-family: inherit;
+        font-size: 13px;
+        background: #FAFAFD;
+        color: var(--profile-text);
+    }
+
+    .password-input .form-control:focus {
+        background: #fff;
+        border-color: #BFB6EE;
+        box-shadow: 0 0 0 4px rgba(139, 127, 214, .12);
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 0;
+        background: none;
+        color: var(--profile-muted);
+        cursor: pointer;
+        font-size: 17px;
+    }
+
+    .password-toggle:hover {
+        color: var(--profile-accent);
+    }
+
+    .password-help {
+        display: flex;
+        gap: 9px;
+        align-items: flex-start;
+        padding: 13px 14px;
+        margin-top: 20px;
+        border-radius: 12px;
+        background: #E8F2FF;
+        color: #4A7CC2;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    .password-help i {
+        font-size: 15px;
+        margin-top: 1px;
+    }
+
+    /* Buttons */
+
+    .btn-profile {
+        width: 100%;
+        min-height: 50px;
+        border: none;
+        border-radius: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #9C91E2, var(--profile-accent), var(--profile-accent-dark));
+        box-shadow: 0 8px 20px rgba(139, 127, 214, .25);
+        transition: .2s ease;
+    }
+
+    .btn-profile:hover {
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 12px 25px rgba(139, 127, 214, .35);
+    }
+
+    .profile-alert {
+        border: 0;
+        border-radius: 13px;
+        padding: 14px 16px;
+        font-size: 13px;
+        margin-bottom: 20px;
+    }
+
+    .profile-alert-success {
+        background: #E3F5EE;
+        color: #3E9A77;
+    }
+
+    .profile-alert-danger {
+        background: #FBE7EE;
+        color: #C2476B;
+    }
+
+    .field-validation-error {
+        display: block;
+        color: #C2476B;
+        font-size: 11px;
+        margin-top: 6px;
+    }
+
+    .validation-summary-valid {
+        display: none;
+    }
+
+    @@media(max-width: 767px) {
+        .profile-card {
+            padding: 20px;
+        }
+
+        .profile-summary {
+            padding: 18px;
+            gap: 14px;
+        }
+
+        .profile-avatar {
+            width: 65px;
+            height: 65px;
+            border-radius: 20px;
+        }
+
+        .profile-summary h4 {
+            font-size: 16px;
+        }
+
+        .image-preview-card {
+            min-height: 220px;
+        }
+    }
+</style>
+
+<div class="profile-page">
+
+    <div class="profile-header">
+        <h2>Profilim</h2>
+        <p>Kişisel bilgilerini ve hesap güvenliği ayarlarını buradan yönetebilirsin.</p>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="profile-alert profile-alert-success">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="profile-alert profile-alert-danger">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Profile Summary -->
+
+    <div class="profile-summary">
+
+        <div class="profile-avatar">
+            <img id="summaryProfileImage"
+                 src="@Model.ImageUrl"
+                 alt="Profil fotoğrafı"
+                 style="@(string.IsNullOrWhiteSpace(Model.ImageUrl) ? "display:none;" : "")"
+                 onerror="this.style.display='none'; document.getElementById('summaryProfileIcon').style.display='block';" />
+
+            <i id="summaryProfileIcon"
+               class="bi bi-person-fill"
+               style="@(string.IsNullOrWhiteSpace(Model.ImageUrl) ? "" : "display:none;")"></i>
+        </div>
+
+        <div>
+            <h4 id="summaryFullName">@Model.Name @Model.Surname</h4>
+            <p class="mb-2" id="summaryUserName">@@@Model.UserName</p>
+
+            @if (Model.EmailConfirmed)
+            {
+                <span class="status-badge status-success">
+                    <i class="bi bi-patch-check-fill"></i>
+                    E-posta doğrulandı
+                </span>
+            }
+            else
+            {
+                <span class="status-badge status-warning">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    E-posta doğrulanmadı
+                </span>
+            }
+        </div>
+
+    </div>
+
+    <div class="row">
+
+        <!-- Personal Information -->
+
+        <div class="col-lg-7">
+
+            <div class="profile-card">
+
+                <div class="profile-card-title">
+                    <div class="profile-card-icon">
+                        <i class="bi bi-person-vcard"></i>
+                    </div>
+
+                    <div>
+                        <h5>Kişisel Bilgiler</h5>
+                        <p>Hesap bilgilerini buradan güncelleyebilirsin.</p>
+                    </div>
+                </div>
+
+                <form asp-controller="Profile"
+                      asp-action="UpdateProfile"
+                      method="post"
+                      id="updateProfileForm">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" asp-for="Id" />
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="profile-alert profile-alert-danger"></div>
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+                            <div class="profile-field">
+                                <label asp-for="Name">Ad</label>
+                                <div class="profile-input-group">
+                                    <i class="bi bi-person"></i>
+                                    <input asp-for="Name"
+                                           class="profile-input"
+                                           placeholder="Adınızı giriniz"
+                                           maxlength="50" />
+                                </div>
+                                <span asp-validation-for="Name" class="field-validation-error"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="profile-field">
+                                <label asp-for="Surname">Soyad</label>
+                                <div class="profile-input-group">
+                                    <i class="bi bi-person"></i>
+                                    <input asp-for="Surname"
+                                           class="profile-input"
+                                           placeholder="Soyadınızı giriniz"
+                                           maxlength="50" />
+                                </div>
+                                <span asp-validation-for="Surname" class="field-validation-error"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="profile-field">
+                                <label asp-for="UserName">Kullanıcı Adı</label>
+                                <div class="profile-input-group">
+                                    <i class="bi bi-at"></i>
+                                    <input asp-for="UserName"
+                                           class="profile-input"
+                                           placeholder="Kullanıcı adınızı giriniz"
+                                           maxlength="50" />
+                                </div>
+                                <span asp-validation-for="UserName" class="field-validation-error"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="profile-field">
+                                <label asp-for="Email">E-posta Adresi</label>
+                                <div class="profile-input-group">
+                                    <i class="bi bi-envelope"></i>
+                                    <input asp-for="Email"
+                                           class="profile-input"
+                                           readonly />
+                                </div>
+                                <small class="profile-input-hint">
+                                    E-posta adresi bu bölümden değiştirilemez.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="profile-field">
+                                <label asp-for="PhoneNumber">Telefon Numarası</label>
+                                <div class="profile-input-group">
+                                    <i class="bi bi-telephone"></i>
+                                    <input asp-for="PhoneNumber"
+                                           class="profile-input"
+                                           placeholder="Telefon numaranızı giriniz" />
+                                </div>
+                                <span asp-validation-for="PhoneNumber" class="field-validation-error"></span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="profile-field">
+                                <label>Telefon Doğrulaması</label>
+                                <div class="profile-input"
+                                     style="display:flex; align-items:center;">
+
+                                    @if (Model.PhoneNumberConfirmed)
+                                    {
+                                        <span class="status-badge status-success">
+                                            <i class="bi bi-check-circle-fill"></i>
+                                            Doğrulandı
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge status-warning">
+                                            <i class="bi bi-clock"></i>
+                                            Doğrulanmadı
+                                        </span>
+                                    }
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="profile-field">
+                                <label asp-for="Description">Hakkımda</label>
+                                <textarea asp-for="Description"
+                                          class="profile-input"
+                                          placeholder="Kendiniz hakkında kısa bir açıklama yazabilirsiniz..."
+                                          maxlength="500"></textarea>
+                                <span asp-validation-for="Description" class="field-validation-error"></span>
+                            </div>
+                        </div>
+
+                        <!-- Profile Image URL -->
+
+                        <div class="col-12">
+                            <div class="profile-field mb-0">
+                                <label asp-for="ImageUrl">Profil Fotoğrafı URL</label>
+                                <div class="profile-input-group">
+                                    <i class="bi bi-link-45deg"></i>
+                                    <input asp-for="ImageUrl"
+                                           type="url"
+                                           class="profile-input"
+                                           id="ImageUrl"
+                                           placeholder="https://example.com/profile.jpg" />
+                                </div>
+                                <small class="profile-input-hint">
+                                    Profil fotoğrafınızın internet üzerindeki doğrudan görsel bağlantısını giriniz.
+                                </small>
+                                <span asp-validation-for="ImageUrl" class="field-validation-error"></span>
+                            </div>
+                        </div>
+
+                        <!-- Live Image Preview -->
+
+                        <div class="col-12 mt-3">
+                            <div class="image-preview-card">
+
+                                <div class="image-preview-avatar">
+                                    <img id="profileImagePreview"
+                                         src="@Model.ImageUrl"
+                                         alt="Profil fotoğrafı önizlemesi"
+                                         style="@(string.IsNullOrWhiteSpace(Model.ImageUrl) ? "display:none;" : "")"
+                                         onerror="handlePreviewError()" />
+
+                                    <i id="profileImagePlaceholder"
+                                       class="bi bi-person-fill"
+                                       style="@(string.IsNullOrWhiteSpace(Model.ImageUrl) ? "" : "display:none;")"></i>
+                                </div>
+
+                                <h6>Profil Fotoğrafı Önizlemesi</h6>
+                                <p>Girdiğiniz görsel bağlantısı burada görüntülenecektir.</p>
+
+                                <div id="imagePreviewStatus" class="image-preview-status">
+                                    @(string.IsNullOrWhiteSpace(Model.ImageUrl) ? "Henüz fotoğraf seçilmedi." : "Mevcut profil fotoğrafı")
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <button type="submit"
+                            class="btn-profile mt-4"
+                            id="updateProfileBtn">
+
+                        <i class="bi bi-check2-circle"></i>
+                        Değişiklikleri Kaydet
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+        <!-- Password Change -->
+
+        <div class="col-lg-5">
+
+            <div class="profile-card">
+
+                <div class="profile-card-title">
+                    <div class="profile-card-icon">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+
+                    <div>
+                        <h5>Şifre ve Güvenlik</h5>
+                        <p>Hesabının şifresini güncelle</p>
+                    </div>
+                </div>
+
+                <form asp-controller="Profile"
+                      asp-action="ChangePassword"
+                      method="post"
+                      id="changePasswordForm">
+
+                    @Html.AntiForgeryToken()
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="profile-alert profile-alert-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="CurrentPassword" class="password-label">
+                            Mevcut Şifre
+                        </label>
+
+                        <div class="password-input">
+                            <input asp-for="CurrentPassword"
+                                   class="form-control"
+                                   placeholder="Mevcut şifrenizi giriniz"
+                                   autocomplete="current-password" />
+
+                            <button type="button"
+                                    class="password-toggle"
+                                    onclick="togglePassword('CurrentPassword', this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+
+                        <span asp-validation-for="CurrentPassword"
+                              class="field-validation-error"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NewPassword" class="password-label">
+                            Yeni Şifre
+                        </label>
+
+                        <div class="password-input">
+                            <input asp-for="NewPassword"
+                                   class="form-control"
+                                   placeholder="Yeni şifrenizi giriniz"
+                                   autocomplete="new-password" />
+
+                            <button type="button"
+                                    class="password-toggle"
+                                    onclick="togglePassword('NewPassword', this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+
+                        <span asp-validation-for="NewPassword"
+                              class="field-validation-error"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ConfirmPassword" class="password-label">
+                            Yeni Şifre Tekrar
+                        </label>
+
+                        <div class="password-input">
+                            <input asp-for="ConfirmPassword"
+                                   class="form-control"
+                                   placeholder="Yeni şifrenizi tekrar giriniz"
+                                   autocomplete="new-password" />
+
+                            <button type="button"
+                                    class="password-toggle"
+                                    onclick="togglePassword('ConfirmPassword', this)">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+
+                        <span asp-validation-for="ConfirmPassword"
+                              class="field-validation-error"></span>
+                    </div>
+
+                    <div class="password-help">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <span>
+                            Güvenliğin için yeni şifren en az 6 karakter olmalıdır.
+                            Büyük harf, küçük harf ve rakam kullanmanı öneririz.
+                        </span>
+                    </div>
+
+                    <button type="submit"
+                            class="btn-profile mt-4"
+                            id="changePasswordBtn">
+
+                        <i class="bi bi-shield-check"></i>
+                        Şifremi Değiştir
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    // Password visibility
+    function togglePassword(inputId, button) {
+        const input = document.getElementById(inputId);
+        const icon = button.querySelector('i');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    }
+
+    // Live profile image preview
+    const imageUrlInput = document.getElementById('ImageUrl');
+    const previewImage = document.getElementById('profileImagePreview');
+    const previewPlaceholder = document.getElementById('profileImagePlaceholder');
+    const previewStatus = document.getElementById('imagePreviewStatus');
+
+    const summaryImage = document.getElementById('summaryProfileImage');
+    const summaryIcon = document.getElementById('summaryProfileIcon');
+
+    function updateImagePreview() {
+        const url = imageUrlInput.value.trim();
+
+        if (!url) {
+            showImagePlaceholder();
+            return;
+        }
+
+        previewImage.style.display = 'none';
+        summaryImage.style.display = 'none';
+
+        const testImage = new Image();
+
+        testImage.onload = function () {
+            previewImage.src = url;
+            previewImage.style.display = 'block';
+            previewPlaceholder.style.display = 'none';
+
+            summaryImage.src = url;
+            summaryImage.style.display = 'block';
+            summaryIcon.style.display = 'none';
+
+            previewStatus.textContent = 'Fotoğraf başarıyla yüklendi.';
+            previewStatus.classList.remove('error');
+        };
+
+        testImage.onerror = function () {
+            showImagePlaceholder();
+            previewStatus.textContent = 'Görsel yüklenemedi. URL adresini kontrol ediniz.';
+            previewStatus.classList.add('error');
+        };
+
+        testImage.src = url;
+    }
+
+    function showImagePlaceholder() {
+        previewImage.style.display = 'none';
+        previewPlaceholder.style.display = 'block';
+
+        summaryImage.style.display = 'none';
+        summaryIcon.style.display = 'block';
+
+        previewStatus.textContent = 'Henüz geçerli bir fotoğraf girilmedi.';
+        previewStatus.classList.remove('error');
+    }
+
+    function handlePreviewError() {
+        showImagePlaceholder();
+        previewStatus.textContent = 'Görsel yüklenemedi. URL adresini kontrol ediniz.';
+        previewStatus.classList.add('error');
+    }
+
+    imageUrlInput.addEventListener('input', updateImagePreview);
+
+    // Live name and username update
+    const nameInput = document.getElementById('Name');
+    const surnameInput = document.getElementById('Surname');
+    const userNameInput = document.getElementById('UserName');
+
+function updateProfileSummary() {
+    const fullName = `${nameInput.value} ${surnameInput.value}`.trim();
+
+    document.getElementById('summaryFullName').textContent =
+        fullName || 'İsimsiz Kullanıcı';
+
+    document.getElementById('summaryUserName').textContent =
+        '@@' + (userNameInput.value || 'kullanici');
+}
+
+    nameInput.addEventListener('input', updateProfileSummary);
+    surnameInput.addEventListener('input', updateProfileSummary);
+    userNameInput.addEventListener('input', updateProfileSummary);
+
+    // Profile form submit
+    const profileForm = document.getElementById('updateProfileForm');
+    const profileButton = document.getElementById('updateProfileBtn');
+
+    profileForm.addEventListener('submit', function () {
+        if (!profileForm.checkValidity()) return;
+
+        profileButton.disabled = true;
+        profileButton.innerHTML = `
+            <span class="spinner-border spinner-border-sm"></span>
+            Profil güncelleniyor...
+        `;
+    });
+
+    // Password form submit
+    const passwordForm = document.getElementById('changePasswordForm');
+    const passwordButton = document.getElementById('changePasswordBtn');
+
+    passwordForm.addEventListener('submit', function () {
+        if (!passwordForm.checkValidity()) return;
+
+        passwordButton.disabled = true;
+        passwordButton.innerHTML = `
+            <span class="spinner-border spinner-border-sm"></span>
+            Şifre güncelleniyor...
+        `;
+    });
+</script>

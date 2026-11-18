@@ -1,0 +1,154 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr">
+
+@await Component.InvokeAsync("_MessageLayoutStyleComponentPartial")
+
+<body class="preload"
+      data-title="@ViewData["Title"]"
+      data-active-menu="@ViewData["ActiveMenu"]"
+      data-inbox-url="@(Url.Action("Index", "Inbox") ?? "/Inbox")">
+
+    @await Component.InvokeAsync("_MessageLayoutSidebarComponentPartial")
+
+    @await Component.InvokeAsync("_MessageLayoutNavbarComponentPartial")
+
+    <!-- =====================================================================
+         DİNAMİK İÇERİK — her View (Inbox/Index.cshtml …) burayı doldurur
+         ===================================================================== -->
+    <main class="app-main page-enter" id="mainContent">
+        @RenderBody()
+    </main>
+
+    <div class="toast-stack" id="toastStack"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+            /* ======================================================================
+               MAILORA LAYOUT — yalnızca tüm sayfalarda ortak olan davranışlar:
+               toast, sidebar (daralt / mobil menü), aktif menü, rozetler,
+               global arama ve etiket kısayolları.
+               Sayfalar bu fonksiyonlara window.Mailora üzerinden erişir.
+               ====================================================================== */
+            (() => {
+                const SIDEBAR_KEY = 'mailora.sidebarCollapsed';
+                const body = document.body;
+                const INBOX_URL = body.dataset.inboxUrl || '/Inbox';
+
+                /* --- Yardımcılar --- */
+                const $  = (sel, root = document) => root.querySelector(sel);
+                const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+                const readJSON  = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+                const writeJSON = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } };
+                const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+                /* --- Toast bildirimi --- */
+                function showToast(text, icon = 'bi-check2-circle', action) {
+                    const stack = $('#toastStack');
+                    if (!stack) return;
+                    const el = document.createElement('div');
+                    el.className = 'm-toast';
+                    el.innerHTML = `<i class="bi iconlead-ic"></i><span>{text}</span>`;
+                    const close = () => { el.classList.add('out'); setTimeout(() => el.remove(), 250); };
+                    if (action) {
+                        const b = document.createElement('button');
+                        b.type = 'button';
+                        b.textContent = action.label;
+                        b.onclick = () => { action.onClick(); close(); };
+                        el.appendChild(b);
+                    }
+                    stack.appendChild(el);
+                    setTimeout(close, action ? 5000 : 2800);
+                }
+
+                /* --- Sidebar rozetleri (ör. setBadge('badgeInbox', 4)) --- */
+                function setBadge(id, n) {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = n ? n : '';
+                }
+
+                /* --- Sayfa başlığı & aktif menü (ViewData["Title"], ViewData["ActiveMenu"]) --- */
+                if (body.dataset.title) document.title = `${body.dataset.title} · Mailora`;
+                const activeMenu = body.dataset.activeMenu;
+                if (activeMenu) {
+                    $$('.side-link').forEach(a =>
+                        a.classList.toggle('active', a.dataset.menu === activeMenu || a.dataset.page === activeMenu));
+                }
+
+                /* --- Sidebar: masaüstünde daralt, tablet & mobilde açılır menü --- */
+                const openSidebar  = () => body.classList.add('sidebar-open');
+                const closeSidebar = () => body.classList.remove('sidebar-open');
+
+                function setSidebarCollapsed(on, persist = true) {
+                    body.classList.toggle('sidebar-collapsed', on);
+                    const t = $('#sidebarToggle');
+                    if (t) {
+                        t.title = on ? 'Menüyü genişlet' : 'Menüyü daralt';
+                        t.setAttribute('aria-expanded', String(!on));
+                    }
+                    if (persist) writeJSON(SIDEBAR_KEY, on);
+                }
+
+                $('#sidebarToggle')?.addEventListener('click', () => {
+                    if (window.innerWidth >= 992) setSidebarCollapsed(!body.classList.contains('sidebar-collapsed'));
+                    else openSidebar();
+                });
+                $('#sidebarBackdrop')?.addEventListener('click', closeSidebar);
+                window.addEventListener('resize', () => { if (window.innerWidth >= 992) closeSidebar(); });
+
+                /* --- Sidebar etiketleri (data-label="İş") ---
+                   Gelen Kutusu açıksa listeyi filtreler, değilse Gelen Kutusu'na yönlendirir. */
+                document.addEventListener('click', e => {
+                    const lbl = e.target.closest('[data-label]');
+                    if (!lbl) return;
+                    e.preventDefault();
+                    if (typeof window.Mailora.onLabel === 'function') {
+                        window.Mailora.onLabel(lbl.dataset.label);
+                        closeSidebar();
+                    } else {
+                        location.href = `INBOXURL?label={encodeURIComponent(lbl.dataset.label)}`;
+                    }
+                });
+
+                /* --- Global arama (Navbar) ---
+                   Gelen Kutusu açıksa anlık filtreler, değilse Enter ile Gelen Kutusu'nda arar. */
+                const globalSearch = $('#globalSearch');
+                if (globalSearch) {
+                    globalSearch.addEventListener('input', e => {
+                        if (typeof window.Mailora.onSearch === 'function') window.Mailora.onSearch(e.target.value);
+                    });
+                    globalSearch.addEventListener('keydown', e => {
+                        if (e.key !== 'Enter' || typeof window.Mailora.onSearch === 'function') return;
+                        e.preventDefault();
+                        const q = globalSearch.value.trim();
+                        location.href = q ? `INBOXURL?q={encodeURIComponent(q)}` : INBOX_URL;
+                    });
+                }
+
+                /* --- Genel klavye kısayolları --- */
+                document.addEventListener('keydown', e => {
+                    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); globalSearch?.focus(); }
+                    if (e.key === 'Escape') closeSidebar();
+                });
+
+                /* --- Sayfaların kullanacağı ortak API --- */
+                window.Mailora = {
+                    $, $$, escapeHtml, showToast, setBadge, openSidebar, closeSidebar,
+                    inboxUrl: INBOX_URL,
+                    onSearch: null,   // sayfa arama yapabiliyorsa kendi fonksiyonunu atar
+                    onLabel: null     // sayfa etiket filtresi destekliyorsa kendi fonksiyonunu atar
+                };
+
+                /* --- Başlangıç --- */
+                setSidebarCollapsed(readJSON(SIDEBAR_KEY) === true, false);
+                requestAnimationFrame(() => requestAnimationFrame(() => body.classList.remove('preload')));
+            })();
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+
+

@@ -1,0 +1,149 @@
+﻿
+@model DashboardLastMessagesViewModel
+
+<div class="dash-card dash-card--table">
+    <div class="dash-card-head">
+        <div>
+            <h2>Son Mesajlar</h2>
+            <p>Gelen ve gönderilen en yeni 6 mesaj</p>
+        </div>
+
+        <a class="dash-link"
+           asp-controller="Message"
+           asp-action="Inbox">
+            Tüm Mesajları Gör <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+
+    @if (Model.RecentMessages.Any())
+    {
+        <div class="dash-table-wrap">
+            <table class="dash-table">
+                <colgroup>
+                    <col class="c-who">
+                    <col>
+                    <col class="c-date">
+                    <col class="c-status">
+                    <col class="c-star">
+                </colgroup>
+
+                <thead>
+                    <tr>
+                        <th>Gönderen / Alıcı</th>
+                        <th>Konu</th>
+                        <th>Tarih</th>
+                        <th>Durum</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var item in Model.RecentMessages)
+                    {
+                        <tr class="@(!item.IsRead && item.IsIncoming ? "is-unread" : "")">
+                            <td class="dash-td-who">
+                                <div class="dash-who">
+                                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                    {
+                                        <img class="avatar"
+                                             src="@item.ImageUrl"
+                                             alt="@item.DisplayName" />
+                                    }
+                                    else
+                                    {
+                                        <span class="avatar @item.AvatarClass">
+                                            @item.Initials
+                                        </span>
+                                    }
+
+                                    <div class="dash-who-text">
+                                        <span class="dash-name">
+                                            @if (item.IsIncoming)
+                                            {
+                                                <i class="dash-dir in bi bi-arrow-down-left"
+                                                   title="Gelen"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="dash-dir out bi bi-arrow-up-right"
+                                                   title="Gönderilen"></i>
+                                            }
+
+                                            <span>@item.DisplayName</span>
+                                        </span>
+
+                                        <span class="dash-mail">@item.Email</span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td class="dash-td-subject">
+                                <a class="dash-subject"
+                                   asp-controller="Message"
+                                   asp-action="MessageDetail"
+                                   asp-route-id="@item.MessageId"
+                                   title="@item.Subject">
+                                    @item.Subject
+                                </a>
+                            </td>
+
+                            <td class="dash-td-date">
+                                <time class="dash-time"
+                                      datetime="@item.SendDate.ToString("yyyy-MM-ddTHH:mm")"
+                                      title="@item.SendDate.ToString("dd MMMM yyyy, HH:mm")">
+                                    @if (item.SendDate.Date == DateTime.Today)
+                                    {
+                                        @item.SendDate.ToString("HH:mm")
+                                    }
+                                    else if (item.SendDate.Date == DateTime.Today.AddDays(-1))
+                                    {
+                                        @:Dün
+                                    }
+                                    else
+                                    {
+                                        @item.SendDate.ToString("dd MMM")
+                                    }
+                                </time>
+                            </td>
+
+                            <td class="dash-td-status">
+                                @if (item.IsRead)
+                                {
+                                    <span class="dash-status dash-status--read">
+                                        Okundu
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="dash-status dash-status--unread">
+                                        Okunmadı
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="dash-empty">
+            <div class="dash-empty-ic">
+                <i class="bi bi-inbox"></i>
+            </div>
+
+            <h3>Henüz mesajınız yok</h3>
+            <p>Mesaj gönderdiğinizde veya aldığınızda burada listelenecek.</p>
+
+            <a class="btn-send"
+               asp-controller="Message"
+               asp-action="SendMessage"
+               style="padding:10px 20px;font-size:14px">
+                <span class="lbl">
+                    <i class="bi bi-pencil-square"></i>
+                    İlk Mesajı Gönder
+                </span>
+            </a>
+        </div>
+    }
+</div>

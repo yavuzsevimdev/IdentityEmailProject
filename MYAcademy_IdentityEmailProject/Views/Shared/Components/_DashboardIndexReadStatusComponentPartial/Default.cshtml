@@ -1,0 +1,66 @@
+﻿@model MYAcademy_IdentityEmailProject.Models.DashboardReadStatusViewModel
+
+<div class="dash-card">
+    <div class="dash-card-head">
+        <div>
+            <h2>Okunma Durumu</h2>
+            <p>Gelen kutunuzdaki mesajlar</p>
+        </div>
+    </div>
+
+    <div class="dash-dist-body">
+        <div class="dash-donut">
+            <canvas id="dashReadChart"
+                    role="img"
+                    aria-label="Okunan ve okunmayan mesajlar pasta grafiği">
+            </canvas>
+        </div>
+
+        <div class="dash-dist-col">
+            <ul class="dash-dist">
+                <li>
+                    <span class="dash-dot" style="--c:#7DD3B0"></span>
+                    Okundu
+                    <span class="n">@Model.ReadCount</span>
+                    <span class="p">%@Model.ReadPercentage</span>
+                </li>
+
+                <li>
+                    <span class="dash-dot" style="--c:#EBA27A"></span>
+                    Okunmadı
+                    <span class="n">@Model.UnreadCount</span>
+                    <span class="p">%@Model.UnreadPercentage</span>
+                </li>
+            </ul>
+
+            <div class="dash-meter">
+                <div class="dash-meter-top">
+                    <span>Okunma oranı</span>
+                    <b>%@Model.ReadPercentage</b>
+                </div>
+
+                <div class="dash-meter-bar">
+                    <span style="--w:@(Model.ReadPercentage)%"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="application/json" id="dashboardReadStatusData">
+@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new[]
+{
+    new
+    {
+        label = "Okundu",
+        value = Model.ReadCount,
+        color = "#7DD3B0"
+    },
+    new
+    {
+        label = "Okunmadı",
+        value = Model.UnreadCount,
+        color = "#EBA27A"
+    }
+}))
+</script>

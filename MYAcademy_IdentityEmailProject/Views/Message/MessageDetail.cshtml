@@ -1,0 +1,376 @@
+﻿
+@model MessageDetailViewModel
+
+@{
+    ViewData["Title"] = "Mesaj Detayı";
+    Layout = "~/Views/MessageLayout/Index.cshtml";
+
+    var senderInitials = !string.IsNullOrWhiteSpace(Model.SenderName)
+        ? string.Join("", Model.SenderName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Take(2).Select(x => x.Substring(0, 1))).ToUpper()
+        : "?";
+}
+
+<style>
+    .detail-page {
+        --accent: #8B7FD6;
+        --accent-dark: #7467C7;
+        --text: #34334A;
+        --muted: #9291A8;
+        --bg: #F8F9FD;
+        --line: #EEEEF5;
+        color: var(--text);
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        padding-bottom: 35px;
+    }
+
+    .detail-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 22px;
+        flex-wrap: wrap;
+    }
+
+    .detail-heading h3 {
+        font-size: 22px;
+        font-weight: 800;
+        margin: 0 0 5px;
+    }
+
+    .detail-heading p {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .detail-btn {
+        border: 1px solid var(--line);
+        background: white;
+        color: #77758F;
+        padding: 10px 15px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: .2s;
+    }
+
+    .detail-btn:hover {
+        color: var(--accent-dark);
+        border-color: var(--accent);
+        background: #F9F7FF;
+    }
+
+    .message-card {
+        background: #fff;
+        border: 1px solid #EEEEF5;
+        border-radius: 20px;
+        box-shadow: 0 8px 30px rgba(45, 42, 85, .045);
+        overflow: hidden;
+    }
+
+    .message-card-header {
+        padding: 25px 30px;
+        border-bottom: 1px solid var(--line);
+        background: linear-gradient(135deg, #fff 0%, #FAF9FF 100%);
+    }
+
+    .subject-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .message-subject {
+        font-size: 23px;
+        font-weight: 800;
+        line-height: 1.4;
+        margin: 0;
+        word-break: break-word;
+    }
+
+    .category-badge {
+        background: #F0EDFF;
+        color: #8174CE;
+        border-radius: 30px;
+        padding: 7px 12px;
+        font-size: 11px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .sender-section {
+        padding: 25px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 15px;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .sender-info {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        min-width: 0;
+    }
+
+    .sender-avatar {
+        width: 52px;
+        height: 52px;
+        min-width: 52px;
+        border-radius: 16px;
+        object-fit: cover;
+        background: linear-gradient(135deg, #A69BE9, #7D72C9);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+        font-weight: 800;
+    }
+
+    .sender-name {
+        font-size: 14px;
+        font-weight: 800;
+        margin-bottom: 4px;
+    }
+
+    .sender-email {
+        color: var(--muted);
+        font-size: 12px;
+        overflow-wrap: anywhere;
+    }
+
+    .message-date {
+        color: var(--muted);
+        font-size: 12px;
+        text-align: right;
+        white-space: nowrap;
+        line-height: 1.8;
+    }
+
+    .message-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        padding: 17px 30px;
+        background: #FCFCFE;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .meta-item {
+        font-size: 12px;
+        color: var(--muted);
+        overflow-wrap: anywhere;
+    }
+
+    .meta-item strong {
+        color: #65637B;
+        font-weight: 700;
+        margin-right: 5px;
+    }
+
+    .message-content {
+        padding: 35px 30px 45px;
+        min-height: 250px;
+        font-size: 14px;
+        line-height: 2;
+        color: #55546A;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+    }
+
+    .message-footer {
+        padding: 20px 30px;
+        border-top: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .reply-btn {
+        background: linear-gradient(135deg, #9589E0, #7467C7);
+        color: white;
+        padding: 11px 19px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 800;
+        text-decoration: none;
+        border: none;
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        box-shadow: 0 5px 15px rgba(139, 127, 214, .22);
+    }
+
+    .reply-btn:hover {
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    .favorite-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: white;
+        color: #A3A1B4;
+        font-size: 17px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .favorite-btn.active {
+        color: #E9A83E;
+        background: #FFF9ED;
+        border-color: #F7E5BD;
+    }
+
+    @@media(max-width: 768px) {
+        .message-card-header,
+        .sender-section,
+        .message-meta,
+        .message-content,
+        .message-footer {
+            padding-left: 18px;
+            padding-right: 18px;
+        }
+
+        .subject-row,
+        .sender-section {
+            flex-direction: column;
+        }
+
+        .message-date {
+            text-align: left;
+        }
+
+        .message-subject {
+            font-size: 19px;
+        }
+    }
+</style>
+
+<div class="detail-page">
+
+    <div class="detail-top">
+        <div class="detail-heading">
+            <h3>Mesaj Detayı</h3>
+            <p>Gelen kutunuzdaki mesajın ayrıntıları</p>
+        </div>
+
+        <a asp-controller="Inbox"
+           asp-action="Index"
+           class="detail-btn">
+            <i class="bi bi-arrow-left"></i>
+            Gelen Kutusuna Dön
+        </a>
+    </div>
+
+    <div class="message-card">
+
+        <div class="message-card-header">
+            <div class="subject-row">
+                <h4 class="message-subject">@Model.Subject</h4>
+
+                <span class="category-badge">
+                    <i class="bi bi-tag me-1"></i>
+                    @Model.CategoryName
+                </span>
+            </div>
+        </div>
+
+        <div class="sender-section">
+
+            <div class="sender-info">
+
+                @if (!string.IsNullOrWhiteSpace(Model.SenderImageUrl))
+                {
+                    <img src="@Model.SenderImageUrl"
+                         class="sender-avatar"
+                         alt="Gönderen profil fotoğrafı" />
+                }
+                else
+                {
+                    <div class="sender-avatar">
+                        @senderInitials
+                    </div>
+                }
+
+                <div>
+                    <div class="sender-name">
+                        @Model.SenderName
+                    </div>
+
+                    <div class="sender-email">
+                        @Model.SenderEmail
+                    </div>
+                </div>
+            </div>
+
+            <div class="message-date">
+                <div>
+                    <i class="bi bi-calendar3 me-1"></i>
+                    @Model.SendDate.ToString("dd MMMM yyyy")
+                </div>
+
+                <div>
+                    <i class="bi bi-clock me-1"></i>
+                    @Model.SendDate.ToString("HH:mm")
+                </div>
+            </div>
+
+        </div>
+
+        <div class="message-meta">
+            <div class="meta-item">
+                <strong>Alıcı:</strong>
+                @Model.ReceiverEmail
+            </div>
+
+            <div class="meta-item">
+                <strong>Durum:</strong>
+                <span class="text-success">
+                    <i class="bi bi-check-circle-fill me-1"></i>
+                    Okundu
+                </span>
+            </div>
+        </div>
+
+<div class="message-content">
+    @Html.Raw(Model.MessageDetail)
+</div>
+        <div class="message-footer">
+
+            <a asp-controller="Message"
+       asp-action="ReplyMessage"
+       asp-route-id="@Model.MessageId"
+       class="reply-btn">
+                <i class="bi bi-reply-fill"></i>
+                Yanıtla
+            </a>
+
+
+            <a asp-controller="Message"
+       asp-action="ForwardMessage"
+       asp-route-id="@Model.MessageId"
+       class="reply-btn">
+                <i class="bi bi-forward"></i>
+                İlet
+            </a>
+
+        </div>
+
+    </div>
+</div>

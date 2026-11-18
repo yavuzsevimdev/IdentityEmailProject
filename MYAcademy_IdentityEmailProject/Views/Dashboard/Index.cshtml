@@ -1,0 +1,286 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["ActiveMenu"] = "dashboard";
+    Layout = "~/Views/MessageLayout/Index.cshtml";
+}
+
+@await Component.InvokeAsync("_DashboardIndexStyleComponentPartial")
+
+<section class="dash" id="dashboard">
+
+    @await Component.InvokeAsync("_DashboardIndexHeaderComponentPartial")
+
+    @await Component.InvokeAsync("_DashboardIndexKPICardsComponentPartial")
+
+    <div class="dash-charts">
+        @await Component.InvokeAsync("_DashboardIndexMessageActivityComponentPartial")
+
+        @await Component.InvokeAsync("_DashboardIndexCategoryDistributionComponentPartial")
+    </div>
+
+    <div class="dash-charts">
+        @await Component.InvokeAsync("_DashboardIndexMessagesByCategoryComponentPartial")
+
+        @await Component.InvokeAsync("_DashboardIndexReadStatusComponentPartial")
+    </div>
+
+    @await Component.InvokeAsync("_DashboardIndexLastMessagesComponentPartial")
+
+</section>
+@await Component.InvokeAsync("_DashboardIndexScriptComponentPartial")
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+    <script>
+                /* =========================================================================
+                   MAILORA · DASHBOARD  (wwwroot/js/dashboard.js)
+                   Dört grafiği çizer: aktivite (çizgi), durum dağılımı (doughnut),
+                   kategoriye göre mesajlar (çubuk), okunma durumu (pasta).
+                   Veri, sayfadaki "dashboardChartData" JSON alanından okunur.
+                   Chart.js yüklenemezse grafik alanları bir uyarı gösterir, sayfanın geri
+                   kalanı etkilenmez.
+                   ========================================================================= */
+                (function () {
+                  'use strict';
+
+                var dataEl = document.getElementById('dashboardChartData');
+        var distributionEl = document.getElementById('dashboardDistributionData');
+
+        var data = {};
+
+        if (dataEl) {
+            try {
+                data = JSON.parse(dataEl.textContent);
+            } catch (e) {
+                console.error('Dashboard grafik verileri okunamadı:', e);
+            }
+        }
+
+        if (distributionEl) {
+            try {
+                data.distribution = JSON.parse(distributionEl.textContent);
+            } catch (e) {
+                console.error('Mesaj dağılım verileri okunamadı:', e);
+            }
+        }
+
+                  var el = function (id) { return document.getElementById(id); };
+                  var canvases = {
+                    activity: el('dashActivityChart'),
+                    distribution: el('dashDistChart'),
+                    categories: el('dashCategoryChart'),
+                    readStatus: el('dashReadChart')
+                  };
+
+                  if (typeof Chart === 'undefined') {
+                    Object.keys(canvases).forEach(function (k) {
+                      var box = canvases[k] && canvases[k].closest('.dash-chart-box, .dash-donut');
+                      if (box) box.classList.add('is-failed');
+                    });
+                    return;
+                  }
+
+                  var categoryChartEl = document.getElementById('dashboardCategoryChartData');
+
+        if (categoryChartEl) {
+            try {
+                data.categories = JSON.parse(categoryChartEl.textContent);
+            } catch (e) {
+                console.error('Kategori grafiği verileri okunamadı:', e);
+            }
+        }
+
+                var readStatusEl = document.getElementById('dashboardReadStatusData');
+
+                if (readStatusEl) {
+                    try {
+                        data.readStatus = JSON.parse(readStatusEl.textContent);
+                    } catch (e) {
+                        console.error('Okunma durumu verileri okunamadı:', e);
+                    }
+                }
+                  Chart.defaults.font.family = "'Plus Jakarta Sans', system-ui, sans-serif";
+                  Chart.defaults.color = '#85899B';
+
+                  var tooltip = {
+                    backgroundColor: '#2E3045', titleColor: '#fff', bodyColor: '#E4E1F5',
+                    padding: 12, cornerRadius: 10, boxPadding: 5, usePointStyle: true,
+                    titleFont: { weight: '700', size: 12.5 }, bodyFont: { size: 12.5 }
+                  };
+                  var tick = { color: '#A6A9B8', font: { size: 11.5 } };
+                  var pick = function (items, key) { return items.map(function (i) { return i[key]; }); };
+
+                  function softFill(color) {
+                    return function (ctx) {
+                      var area = ctx.chart.chartArea;
+                      if (!area) return 'transparent';
+                      var g = ctx.chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+                      g.addColorStop(0, color + '40');
+                      g.addColorStop(1, color + '00');
+                      return g;
+                    };
+                  }
+
+                  /* Doughnut ve pasta aynı yapıdadır, yalnızca tür ve stil değişir */
+                  function circle(canvas, items, type) {
+                    var total = items.reduce(function (sum, i) { return sum + i.value; }, 0) || 1;
+                    var ring = type === 'doughnut';
+                    new Chart(canvas, {
+                      type: type,
+                      data: {
+                        labels: pick(items, 'label'),
+                        datasets: [{
+                          data: pick(items, 'value'), backgroundColor: pick(items, 'color'),
+                          borderWidth: ring ? 0 : 3, borderColor: '#fff',
+                          borderRadius: ring ? 6 : 4, spacing: ring ? 3 : 0, hoverOffset: 6
+                        }]
+                      },
+                      options: {
+                        responsive: true, maintainAspectRatio: false, cutout: ring ? '72%' : 0,
+                        plugins: {
+                          legend: { display: false },
+                          tooltip: Object.assign({}, tooltip, {
+                            callbacks: {
+                              label: function (c) { return ' ' + c.label + ': ' + c.parsed + ' (%' + Math.round(c.parsed / total * 100) + ')'; }
+                            }
+                          })
+                        }
+                      }
+                    });
+                  }
+
+                  /* 1) Mesaj aktivitesi (çizgi) */
+                          /* 1) Mesaj aktivitesi (çizgi) */
+                if (canvases.activity) {
+
+                    var activityContainer = canvases.activity.closest('.dash-chart-box');
+
+                    if (activityContainer) {
+
+                        var labels = activityContainer.dataset.labels
+                            ? activityContainer.dataset.labels.split(',')
+                            : [];
+
+                        var receivedCounts = activityContainer.dataset.received
+                            ? activityContainer.dataset.received.split(',').map(Number)
+                            : [];
+
+                        var sentCounts = activityContainer.dataset.sent
+                            ? activityContainer.dataset.sent.split(',').map(Number)
+                            : [];
+
+                        new Chart(canvases.activity, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [
+                                    {
+                                        label: 'Gelen Mesajlar',
+                                        data: receivedCounts,
+                                        borderColor: '#8B7FD6',
+                                        backgroundColor: softFill('#8B7FD6'),
+                                        fill: true,
+                                        tension: .4,
+                                        borderWidth: 2.5,
+                                        pointRadius: 4,
+                                        pointHoverRadius: 6,
+                                        pointBorderWidth: 2,
+                                        pointBackgroundColor: '#fff',
+                                        pointBorderColor: '#8B7FD6',
+                                        pointHoverBackgroundColor: '#8B7FD6',
+                                        pointHoverBorderColor: '#fff'
+                                    },
+                                    {
+                                        label: 'Gönderilen Mesajlar',
+                                        data: sentCounts,
+                                        borderColor: '#6FA8E8',
+                                        backgroundColor: softFill('#6FA8E8'),
+                                        fill: true,
+                                        tension: .4,
+                                        borderWidth: 2.5,
+                                        pointRadius: 4,
+                                        pointHoverRadius: 6,
+                                        pointBorderWidth: 2,
+                                        pointBackgroundColor: '#fff',
+                                        pointBorderColor: '#6FA8E8',
+                                        pointHoverBackgroundColor: '#6FA8E8',
+                                        pointHoverBorderColor: '#fff'
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                interaction: {
+                                    mode: 'index',
+                                    intersect: false
+                                },
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: Object.assign({}, tooltip, {
+                                        callbacks: {
+                                            label: function (c) {
+                                                return ' ' + c.dataset.label + ': ' + c.parsed.y;
+                                            }
+                                        }
+                                    })
+                                },
+                                scales: {
+                                    x: {
+                                        grid: { display: false },
+                                        border: { display: false },
+                                        ticks: tick
+                                    },
+                                    y: {
+                                        beginAtZero: true,
+                                        grid: { color: '#F1F0F8' },
+                                        border: { display: false },
+                                        ticks: Object.assign({
+                                            padding: 10,
+                                            maxTicksLimit: 5,
+                                            precision: 0
+                                        }, tick)
+                                    }
+                                }
+                            }
+                        });
+                    }
+                }
+
+                  /* 2) Durum dağılımı (doughnut) */
+                  if (canvases.distribution && data.distribution) circle(canvases.distribution, data.distribution, 'doughnut');
+
+                  /* 3) Kategoriye göre mesajlar (yatay çubuk) */
+                  if (canvases.categories && data.categories) {
+                    new Chart(canvases.categories, {
+                      type: 'bar',
+                      data: {
+                        labels: pick(data.categories, 'label'),
+                        datasets: [{
+                          data: pick(data.categories, 'value'), backgroundColor: pick(data.categories, 'color'),
+                          borderRadius: 8, borderSkipped: false, barThickness: 20
+                        }]
+                      },
+                      options: {
+                        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                          legend: { display: false },
+                          tooltip: Object.assign({}, tooltip, {
+                            callbacks: { label: function (c) { return ' ' + c.parsed.x + ' mesaj'; } }
+                          })
+                        },
+                        scales: {
+                          x: { beginAtZero: true, grid: { color: '#F1F0F8' }, border: { display: false },
+                               ticks: Object.assign({ maxTicksLimit: 5, precision: 0 }, tick) },
+                          y: { grid: { display: false }, border: { display: false },
+                               ticks: { color: '#4D5066', font: { size: 12.5, weight: '600' } } }
+                        }
+                      }
+                    });
+                  }
+
+                  /* 4) Okunma durumu (pasta) */
+                  if (canvases.readStatus && data.readStatus) circle(canvases.readStatus, data.readStatus, 'pie');
+                })();
+    </script>
+}

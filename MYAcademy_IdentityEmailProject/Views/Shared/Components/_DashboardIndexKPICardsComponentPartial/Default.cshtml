@@ -1,0 +1,91 @@
+﻿
+@model MYAcademy_IdentityEmailProject.Models.DashboardKpiViewModel
+
+<div class="dash-kpis">
+
+    <!-- Gelen Mesajlar -->
+    <a class="dash-kpi dash-kpi--blue"
+       asp-controller="Message"
+       asp-action="Inbox">
+
+        <div class="dash-kpi-top">
+            <span class="dash-kpi-ic">
+                <i class="bi bi-inbox-fill"></i>
+            </span>
+            <i class="bi bi-arrow-right dash-kpi-go"></i>
+        </div>
+
+        <div class="dash-kpi-num">@Model.ReceivedCount</div>
+        <div class="dash-kpi-label">Gelen Mesajlar</div>
+        <div class="dash-kpi-hint">Toplam alınan mesajlar</div>
+    </a>
+
+    <!-- Gönderilen Mesajlar -->
+    <a class="dash-kpi dash-kpi--lav"
+       asp-controller="Message"
+       asp-action="Sendbox">
+
+        <div class="dash-kpi-top">
+            <span class="dash-kpi-ic">
+                <i class="bi bi-send-fill"></i>
+            </span>
+            <i class="bi bi-arrow-right dash-kpi-go"></i>
+        </div>
+
+        <div class="dash-kpi-num">@Model.SentCount</div>
+        <div class="dash-kpi-label">Gönderilen Mesajlar</div>
+        <div class="dash-kpi-hint">Toplam gönderilen mesajlar</div>
+    </a>
+
+    <!-- Okunmamış Mesajlar -->
+    <a class="dash-kpi dash-kpi--alert"
+       asp-controller="Message"
+       asp-action="Inbox">
+
+        <div class="dash-kpi-top">
+            <span class="dash-kpi-ic">
+                <i class="bi bi-envelope-exclamation-fill"></i>
+            </span>
+            <span class="dash-kpi-pill">Bekliyor</span>
+        </div>
+
+        <div class="dash-kpi-num">@Model.UnreadCount</div>
+        <div class="dash-kpi-label">Okunmamış Mesajlar</div>
+        <div class="dash-kpi-hint">Okunmayı bekleyen mesajlar</div>
+    </a>
+
+    <!-- Yıldızlı Mesajlar -->
+    <a class="dash-kpi dash-kpi--sun"
+       asp-controller="Message"
+       asp-action="Starred">
+
+        <div class="dash-kpi-top">
+            <span class="dash-kpi-ic">
+                <i class="bi bi-star-fill"></i>
+            </span>
+            <i class="bi bi-arrow-right dash-kpi-go"></i>
+        </div>
+
+        <div class="dash-kpi-num">@Model.FavoriteCount</div>
+        <div class="dash-kpi-label">Yıldızlı Mesajlar</div>
+        <div class="dash-kpi-hint">Önemli olarak işaretlenen mesajlar</div>
+    </a>
+
+    <!-- Taslak Mesajlar -->
+    <a class="dash-kpi dash-kpi--mint"
+       asp-controller="Message"
+       asp-action="Drafts">
+
+        <div class="dash-kpi-top">
+            <span class="dash-kpi-ic">
+                <i class="bi bi-file-earmark-text-fill"></i>
+            </span>
+            <i class="bi bi-arrow-right dash-kpi-go"></i>
+        </div>
+
+        <div class="dash-kpi-num">@Model.DraftCount</div>
+        <div class="dash-kpi-label">Taslak Mesajlar</div>
+        <div class="dash-kpi-hint">Gönderilmeyi bekleyen taslaklar</div>
+    </a>
+
+</div>

@@ -1,0 +1,420 @@
+﻿@model UserLoginViewModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş Yap · Mailora</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- =====================================================================
+         STİLLER
+         İleride Register sayfasındaki gibi bir ViewComponent'e taşınabilir:
+         @@await Component.InvokeAsync("_LoginStyleComponentPartial")
+         NOT: Razor içinde CSS'teki @@media / @@keyframes yazımı çift @@ ile yazılmalıdır.
+         ===================================================================== -->
+    <style>
+        :root {
+            --bg: #F8F9FD;
+            --accent: #8B7FD6;
+            --accent-dark: #7467C7;
+            --lavender: #EAE6FA;
+            --blue: #E8F2FF;
+            --mint: #E3F5EE;
+            --peach: #FDEEE6;
+            --rose: #FBE7EE;
+            --card: #FFFFFF;
+            --text: #303348;
+            --muted: #85899B;
+            --border: #ECEBF5;
+            --radius: 16px;
+            --shadow-sm: 0 1px 2px rgba(48, 51, 72, .04), 0 2px 8px rgba(48, 51, 72, .04);
+            --shadow: 0 4px 24px rgba(91, 80, 170, .08);
+            --shadow-lg: 0 20px 60px rgba(91, 80, 170, .16);
+            --ease: cubic-bezier(.4, 0, .2, 1);
+        }
+
+        * { box-sizing: border-box; }
+        html, body { min-height: 100%; }
+
+        body {
+            margin: 0;
+            font-family: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        a { color: inherit; text-decoration: none; }
+        button { font-family: inherit; }
+
+        /* ---------- Arka plan ---------- */
+        .auth-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+        .auth-bg span { position: absolute; border-radius: 50%; filter: blur(8px); opacity: .75; }
+        .auth-bg .g1 { width: 420px; height: 420px; top: -160px; left: -120px; background: var(--lavender); }
+        .auth-bg .g2 { width: 360px; height: 360px; bottom: -150px; right: -100px; background: var(--blue); }
+        .auth-bg .g3 { width: 240px; height: 240px; bottom: 12%; left: 8%; background: var(--mint); opacity: .55; }
+
+        /* ---------- Sayfa & kart ---------- */
+        .auth-page {
+            position: relative; z-index: 1;
+            min-height: 100vh; display: grid; place-items: center; padding: 28px 18px;
+        }
+        .auth-card {
+            width: min(980px, 100%);
+            display: grid; grid-template-columns: 1fr 1.02fr;
+            background: var(--card); border-radius: 26px; box-shadow: var(--shadow-lg);
+            overflow: hidden; animation: pageIn .45s var(--ease);
+        }
+        .auth-card.shake { animation: shake .4s var(--ease); }
+        @@keyframes pageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+        @@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+        @@keyframes float { 50% { transform: translateY(-8px); } }
+        @@keyframes letterUp { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @@keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ---------- Sol: marka paneli ---------- */
+        .brand-panel {
+            position: relative; overflow: hidden; padding: 36px 38px;
+            display: flex; flex-direction: column;
+            background: linear-gradient(150deg, #EAE6FA 0%, #E6EEFF 60%, #E8F2FF 100%);
+        }
+        .brand-panel::before {
+            content: ""; position: absolute; width: 340px; height: 340px; border-radius: 50%;
+            right: -120px; top: -140px; background: rgba(255, 255, 255, .5);
+        }
+        .brand-panel::after {
+            content: ""; position: absolute; inset: 0; pointer-events: none;
+            background: radial-gradient(circle, rgba(255, 255, 255, .7) 1.4px, transparent 2px) 0 0 / 24px 24px;
+            -webkit-mask-image: linear-gradient(180deg, transparent 50%, #000 100%);
+            mask-image: linear-gradient(180deg, transparent 50%, #000 100%);
+        }
+        .brand-panel > * { position: relative; z-index: 1; }
+
+        .brand { display: flex; align-items: center; gap: 10px; }
+        .brand-logo {
+            width: 40px; height: 40px; border-radius: 12px;
+            background: linear-gradient(135deg, #A99DF0 0%, var(--accent) 55%, #6F63C4 100%);
+            display: grid; place-items: center; color: #fff; font-size: 19px;
+            box-shadow: 0 6px 16px rgba(139, 127, 214, .35);
+        }
+        .brand-name { font-weight: 800; font-size: 21px; letter-spacing: -.4px; }
+        .brand-name span { color: var(--accent); }
+
+        .brand-copy { margin: 34px 0 22px; }
+        .brand-copy h2 { font-size: 27px; font-weight: 800; letter-spacing: -.6px; line-height: 1.25; margin: 0 0 10px; }
+        .brand-copy p { color: #5D6075; font-size: 14.5px; line-height: 1.7; margin: 0; max-width: 340px; }
+
+        .features { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+        .features li { display: flex; align-items: center; gap: 12px; font-size: 13.5px; font-weight: 600; color: #4D5066; }
+        .features .ic {
+            width: 34px; height: 34px; border-radius: 10px; background: rgba(255, 255, 255, .85);
+            display: grid; place-items: center; color: var(--accent); font-size: 16px; flex-shrink: 0;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .illus { position: relative; width: 210px; height: 140px; margin: auto auto 0 0; padding-top: 24px; }
+        .illus .env { position: absolute; left: 40px; bottom: 8px; width: 132px; height: 86px; }
+        .illus .env::before { content: ""; position: absolute; inset: 0; border-radius: 14px; background: linear-gradient(160deg, #B9B0F2, #8B7FD6); }
+        .illus .letter {
+            position: absolute; left: 12px; right: 12px; bottom: 20px; height: 86px; z-index: 1;
+            background: #fff; border-radius: 10px; padding: 14px 12px;
+            box-shadow: 0 6px 16px rgba(91, 80, 170, .15); animation: letterUp 3.4s ease-in-out infinite;
+        }
+        .illus .letter i { display: block; height: 6px; border-radius: 4px; background: var(--lavender); margin-bottom: 7px; }
+        .illus .letter i:nth-child(1) { width: 55%; background: #D9D3F7; }
+        .illus .letter i:nth-child(2) { width: 85%; }
+        .illus .letter i:nth-child(3) { width: 70%; }
+        .illus .env-front {
+            position: absolute; inset: 0; z-index: 2; border-radius: 14px;
+            background: linear-gradient(160deg, #A99EEC, #8073D0);
+            clip-path: polygon(0 28%, 50% 70%, 100% 28%, 100% 100%, 0 100%);
+        }
+        .illus .env-badge {
+            position: absolute; top: -12px; right: -10px; z-index: 3; width: 34px; height: 34px;
+            border-radius: 50%; border: 3px solid #fff; background: #5CC09A; color: #fff; font-size: 15px;
+            display: grid; place-items: center; box-shadow: 0 6px 14px rgba(92, 192, 154, .4);
+        }
+        .illus .plane { position: absolute; left: 0; top: 30px; color: var(--accent); font-size: 22px; transform: rotate(-12deg); animation: float 3s ease-in-out infinite; }
+        .illus .bubble { position: absolute; border-radius: 50%; animation: float 4s ease-in-out infinite; }
+        .illus .b1 { width: 18px; height: 18px; right: 4px; top: 44px; background: var(--mint); }
+        .illus .b2 { width: 11px; height: 11px; right: 30px; bottom: 4px; background: #fff; animation-delay: .8s; }
+
+        /* ---------- Sağ: form ---------- */
+        .auth-form-wrap { padding: 44px 46px; display: flex; flex-direction: column; justify-content: center; }
+        .form-head h1 { font-size: 28px; font-weight: 800; letter-spacing: -.6px; margin: 0 0 8px; }
+        .form-head p { color: var(--muted); font-size: 14.5px; line-height: 1.6; margin: 0 0 6px; }
+        .switch-link { font-size: 13.5px; color: var(--muted); margin-bottom: 24px; }
+        .switch-link a, .form-foot a { color: var(--accent-dark); font-weight: 700; }
+        .switch-link a:hover, .form-foot a:hover { text-decoration: underline; }
+
+        /* Sunucu doğrulama özeti (asp-validation-summary) */
+        .alert-x { margin: 0 0 18px; }
+        .alert-x.validation-summary-valid { display: none; }
+        .alert-x.validation-summary-errors {
+            display: block; padding: 12px 14px 12px 42px; position: relative;
+            background: #FFF8FA; border: 1px solid #F5CFDC; border-radius: 12px;
+            color: #C2476B; font-size: 13px; font-weight: 600; line-height: 1.5;
+        }
+        .alert-x.validation-summary-errors::before {
+            content: "\F33A"; font-family: "bootstrap-icons"; position: absolute; left: 14px; top: 11px; font-size: 16px;
+        }
+        .alert-x ul { list-style: none; margin: 0; padding: 0; }
+
+        .field { margin-bottom: 18px; }
+        .field label { display: block; font-size: 12.5px; font-weight: 700; color: #5D6075; margin-bottom: 7px; }
+        .field .req { color: #E07597; }
+        .label-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .label-row a { font-size: 12.5px; font-weight: 700; color: var(--accent-dark); }
+        .label-row a:hover { text-decoration: underline; }
+
+        .input-wrap { position: relative; }
+        .input-wrap > i.lead {
+            position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+            color: #A6A9B8; font-size: 16px; pointer-events: none; transition: color .2s;
+        }
+        .a-input {
+            width: 100%; height: 48px; border-radius: 13px; border: 1px solid var(--border); background: var(--bg);
+            padding: 0 42px 0 44px; font-size: 14.5px; color: var(--text); outline: none; font-family: inherit;
+            transition: border-color .2s, background .2s, box-shadow .2s;
+        }
+        .a-input::placeholder { color: #A6A9B8; }
+        .a-input:focus { background: #fff; border-color: #CFC8F2; box-shadow: 0 0 0 4px rgba(139, 127, 214, .12); }
+        .input-wrap:focus-within > i.lead { color: var(--accent); }
+        .a-input.has-eye { padding-right: 48px; }
+
+        .eye-btn {
+            position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+            width: 36px; height: 36px; border: 0; border-radius: 10px; background: transparent;
+            color: #6B6F84; display: grid; place-items: center; font-size: 16px; transition: background .2s, color .2s;
+        }
+        .eye-btn:hover { background: var(--lavender); color: var(--accent-dark); }
+
+        .field.has-error .a-input { border-color: #F0B6C8; background: #FFF8FA; }
+        .field.has-error label { color: #C2476B; }
+        .msg { font-size: 12px; font-weight: 500; color: #C2476B; margin-top: 6px; }
+        .msg:empty { display: none; }
+        .msg::before { content: "\F33A"; font-family: "bootstrap-icons"; margin-right: 6px; }
+        .caps { display: none; font-size: 12px; color: #C8774A; margin-top: 6px; }
+        .caps.show { display: block; }
+
+        /* Beni hatırla */
+        .row-opts { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -2px 0 22px; }
+        .check { display: inline-flex; align-items: center; gap: 10px; font-size: 13.5px; color: #5D6075; cursor: pointer; margin: 0; }
+        .m-check {
+            appearance: none; -webkit-appearance: none; width: 19px; height: 19px; border-radius: 6px;
+            border: 1.6px solid #CDCBDD; background: #fff; cursor: pointer; flex-shrink: 0; position: relative; margin: 0;
+            transition: all .15s var(--ease);
+        }
+        .m-check:hover { border-color: var(--accent); }
+        .m-check:checked { background: var(--accent); border-color: var(--accent); }
+        .m-check:checked::after {
+            content: ""; position: absolute; left: 5.5px; top: 2px; width: 5px; height: 10px;
+            border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg);
+        }
+        .m-check:focus-visible { box-shadow: 0 0 0 4px rgba(139, 127, 214, .25); }
+
+        /* Buton */
+        .btn-primary-x {
+            width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+            border: 0; padding: 14px 24px; border-radius: 14px; font-weight: 700; font-size: 15px; color: #fff; cursor: pointer;
+            background: linear-gradient(135deg, #9C91E2 0%, var(--accent) 50%, var(--accent-dark) 100%);
+            box-shadow: 0 8px 20px rgba(139, 127, 214, .38);
+            transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+        }
+        .btn-primary-x i { transition: transform .2s var(--ease); }
+        .btn-primary-x:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(139, 127, 214, .45); }
+        .btn-primary-x:hover i { transform: translateX(4px); }
+        .btn-primary-x:active { transform: translateY(0); }
+        .btn-primary-x:disabled { cursor: wait; transform: none; opacity: .9; }
+        .spinner {
+            width: 17px; height: 17px; border: 2px solid rgba(255, 255, 255, .4); border-top-color: #fff;
+            border-radius: 50%; animation: spin .7s linear infinite; display: inline-block;
+        }
+
+        .secure-note { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 16px; font-size: 12.5px; color: var(--muted); }
+        .secure-note i { color: #5CC09A; }
+        .form-foot { margin-top: 22px; padding-top: 20px; border-top: 1px dashed var(--border); text-align: center; font-size: 13.5px; color: var(--muted); }
+
+        /* ---------- Responsive ---------- */
+        @@media (max-width: 899.98px) {
+            .auth-card { grid-template-columns: 1fr; max-width: 520px; }
+            .brand-panel { display: none; }
+            .auth-form-wrap { padding: 36px 28px; }
+        }
+        @@media (max-width: 479.98px) {
+            .auth-page { padding: 14px 12px; }
+            .auth-form-wrap { padding: 30px 20px; }
+            .form-head h1 { font-size: 24px; }
+            .row-opts { flex-direction: column; align-items: flex-start; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="auth-bg" aria-hidden="true"><span class="g1"></span><span class="g2"></span><span class="g3"></span></div>
+
+    <!-- =====================================================================
+         LOGIN PAGE
+         ASP.NET Core MVC: Views/Account/Login.cshtml (Layout = null)
+         Form  → Account/Login (POST)
+         Model → UserLoginViewModel (Username, Password)
+         ===================================================================== -->
+    <main class="auth-page">
+        <div class="auth-card" id="authCard">
+
+            <!-- Sol: marka paneli (ileride _LoginBrandComponentPartial olabilir) -->
+            <aside class="brand-panel" aria-hidden="true">
+                <a class="brand" asp-controller="Account" asp-action="Login">
+                    <div class="brand-logo"><i class="bi bi-envelope-paper-heart-fill"></i></div>
+                    <div class="brand-name">Mail<span>ora</span></div>
+                </a>
+
+                <div class="brand-copy">
+                    <h2>Tekrar hoş geldiniz!</h2>
+                    <p>Gelen kutunuz sizi bekliyor. Giriş yapın ve mesajlarınıza kaldığınız yerden devam edin.</p>
+                </div>
+
+                <ul class="features">
+                    <li><span class="ic"><i class="bi bi-lightning-charge"></i></span> Hızlı ve sade arayüz</li>
+                    <li><span class="ic"><i class="bi bi-shield-check"></i></span> Güvenli ve şifreli iletişim</li>
+                    <li><span class="ic"><i class="bi bi-phone"></i></span> Her cihazda uyumlu deneyim</li>
+                </ul>
+
+                <div class="illus">
+                    <span class="plane"><i class="bi bi-send-fill"></i></span>
+                    <span class="bubble b1"></span><span class="bubble b2"></span>
+                    <div class="env">
+                        <div class="letter"><i></i><i></i><i></i></div>
+                        <div class="env-front"></div>
+                        <span class="env-badge"><i class="bi bi-check2"></i></span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Sağ: giriş formu -->
+            <section class="auth-form-wrap">
+                <div class="form-head">
+                    <h1>Giriş Yap</h1>
+                    <p>Mailora hesabınıza giriş yaparak devam edin.</p>
+                    <div class="switch-link">Hesabınız yok mu? <a asp-controller="Register" asp-action="Signup">Kayıt Ol</a></div>
+                </div>
+
+                <!-- Sunucu taraflı hatalar (ör. "Kullanıcı adı veya şifre hatalı") -->
+                <div asp-validation-summary="All" class="alert-x" role="alert"></div>
+
+                <form method="post" id="loginForm" novalidate>
+
+                    <div class="field" data-field="username">
+                        <label for="userName">Kullanıcı Adı <span class="req">*</span></label>
+                        <div class="input-wrap">
+                            <i class="bi bi-person lead"></i>
+                            <input class="a-input" id="userName" asp-for="Username" type="text" placeholder="Kullanıcı adınız" autocomplete="username" maxlength="30" spellcheck="false" autocapitalize="none" required>
+                        </div>
+                        <div class="msg" aria-live="polite"></div>
+                    </div>
+
+                    <div class="field" data-field="password">
+                        <div class="label-row">
+                            <label for="password">Şifre <span class="req">*</span></label>
+                            <!-- Şifremi unuttum sayfası hazır olduğunda asp-action ile bağlayın -->
+                            <a href="/Login/ForgotPassword/" tabindex="-1">Şifremi unuttum</a>
+                        </div>
+                        <div class="input-wrap">
+                            <i class="bi bi-lock lead"></i>
+                            <input class="a-input has-eye" id="password" asp-for="Password" type="password" placeholder="Şifreniz" autocomplete="current-password" required>
+                            <button type="button" class="eye-btn" data-eye="password" aria-label="Şifreyi göster" title="Şifreyi göster"><i class="bi bi-eye"></i></button>
+                        </div>
+                        <div class="caps"><i class="bi bi-capslock"></i> Caps Lock açık</div>
+                        <div class="msg" aria-live="polite"></div>
+                    </div>
+
+                    <div class="row-opts">
+                        <!-- İsteğe bağlı: ViewModel'e bool RememberMe eklenirse asp-for="RememberMe" yapılabilir -->
+                        <label class="check"><input type="checkbox" class="m-check" name="RememberMe" value="true"> Beni hatırla</label>
+                    </div>
+
+                    <button type="submit" class="btn-primary-x" id="submitBtn">
+                        <span class="lbl">Giriş Yap</span><i class="bi bi-arrow-right"></i>
+                    </button>
+
+                    <div class="secure-note"><i class="bi bi-shield-check"></i> Bağlantınız şifrelenerek korunur.</div>
+                    <div class="form-foot">Hesabınız yok mu? <a asp-controller="Register" asp-action="Signup">Hemen Kayıt Ol</a></div>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <!-- İleride: @@await Component.InvokeAsync("_LoginScriptComponentPartial") -->
+    <script>
+        (function () {
+            const form = document.getElementById('loginForm');
+            const card = document.getElementById('authCard');
+            const btn = document.getElementById('submitBtn');
+            const user = document.getElementById('userName');
+            const pass = document.getElementById('password');
+
+            const setError = (id, msg) => {
+                const f = document.querySelector('[data-field="' + id + '"]');
+                f.classList.toggle('has-error', !!msg);
+                f.querySelector('.msg').textContent = msg || '';
+            };
+
+            // Yazarken hatayı temizle
+            [['username', user], ['password', pass]].forEach(([id, el]) =>
+                el.addEventListener('input', () => setError(id, '')));
+
+            // Şifre göster / gizle
+            document.querySelectorAll('[data-eye]').forEach(b => b.addEventListener('click', () => {
+                const input = document.getElementById(b.dataset.eye);
+                const show = input.type === 'password';
+                input.type = show ? 'text' : 'password';
+                b.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+                b.title = show ? 'Şifreyi gizle' : 'Şifreyi göster';
+                b.setAttribute('aria-label', b.title);
+            }));
+
+            // Caps Lock uyarısı
+            pass.addEventListener('keyup', e => {
+                const on = e.getModifierState && e.getModifierState('CapsLock');
+                pass.closest('.field').querySelector('.caps').classList.toggle('show', !!on);
+            });
+            pass.addEventListener('blur', () => pass.closest('.field').querySelector('.caps').classList.remove('show'));
+
+            // Gönderim öncesi hızlı kontrol (asıl doğrulama sunucuda yapılır)
+            form.addEventListener('submit', e => {
+                const u = user.value.trim();
+                setError('username', u ? '' : 'Kullanıcı adınızı girin.');
+                setError('password', pass.value ? '' : 'Şifrenizi girin.');
+
+                if (!u || !pass.value) {
+                    e.preventDefault();
+                    card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+                    (!u ? user : pass).focus();
+                    return;
+                }
+                btn.disabled = true;
+                btn.querySelector('.lbl').innerHTML = '<span class="spinner"></span> Giriş yapılıyor…';
+                btn.querySelector('i').style.display = 'none';
+            });
+
+            // Sunucudan hata döndüyse kartı salla ve şifreyi temizle
+            if (document.querySelector('.validation-summary-errors')) {
+                card.classList.add('shake');
+                pass.value = '';
+            }
+
+            if (window.innerWidth >= 768 && !user.value) user.focus(); else if (user.value) pass.focus();
+        })();
+    </script>
+</body>
+</html>

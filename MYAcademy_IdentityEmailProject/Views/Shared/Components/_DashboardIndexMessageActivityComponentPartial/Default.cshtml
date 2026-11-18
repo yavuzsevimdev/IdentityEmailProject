@@ -1,0 +1,48 @@
+﻿
+@model MYAcademy_IdentityEmailProject.Models.DashboardMessageActivityViewModel
+
+<div class="dash-card">
+    <div class="dash-card-head">
+        <div>
+            <h2>Mesaj Aktivitesi</h2>
+            <p>Son 7 gün içindeki gelen ve gönderilen mesajlar</p>
+        </div>
+
+        <span class="dash-pill">
+            <i class="bi bi-calendar-week"></i> Son 7 Gün
+        </span>
+    </div>
+
+    <!-- Grafik açıklamaları -->
+    <div class="dash-legend">
+        <span class="dash-legend-item">
+            <span class="dash-dot" style="--c:#8B7FD6"></span>
+            Gelen Mesajlar <b>@Model.TotalReceived</b>
+        </span>
+
+        <span class="dash-legend-item">
+            <span class="dash-dot" style="--c:#6FA8E8"></span>
+            Gönderilen Mesajlar <b>@Model.TotalSent</b>
+        </span>
+    </div>
+
+    <!-- Grafik verileri -->
+    <div class="dash-chart-box"
+         id="dashActivityChartContainer"
+         data-labels="@string.Join(",", Model.Labels)"
+         data-received="@string.Join(",", Model.ReceivedCounts)"
+         data-sent="@string.Join(",", Model.SentCounts)">
+
+        <canvas id="dashActivityChart"
+                role="img"
+                aria-label="Son 7 günlük gelen ve gönderilen mesaj grafiği">
+        </canvas>
+
+        <div class="dash-chart-fallback">
+            <div>
+                <i class="bi bi-graph-up"></i>
+                Grafik yüklenemedi.
+            </div>
+        </div>
+    </div>
+</div>
